@@ -1,0 +1,165 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'E-commerce App Infrastructure: S3 (Frontend), Elastic Beanstalk (Backend), RDS (Database)'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'e-commerce'
+    Description: 'Environment name (e.g., dev, prod)'
+  DBName:
+    Type: String
+    Default: 'ecommerce_db'
+    Description: 'Database name'
+  DBUser:
+    Type: String
+    Default: 'dbadmin'
+    Description: 'Database master username'
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: 'Database master password'
+  InstanceType:
+    Type: String
+    Default: 't3.micro'
+    AllowedValues: ['t2.micro', 't3.micro']
+    Description: 'EC2 instance type for EB'
+
+Resources:
+  # --- Network & Security ---
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP and SSH
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow DB access from EB
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref InstanceSecurityGroup
+
+  # --- Database (RDS) ---
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref DBName
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: '16.3'
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      PubliclyAccessible: false
+      MultiAZ: false # Keep false for Free Tier
+
+  # --- Backend (Elastic Beanstalk) ---
+  EBApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: !Sub '${EnvironmentName}-api'
+      Description: 'E-commerce API Application'
+
+  EBEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    Properties:
+      ApplicationName: !Ref EBApplication
+      EnvironmentName: !Sub '${EnvironmentName}-env'
+      SolutionStackName: '64bit Amazon Linux 2023 v6.3.2 running Node.js 20' # Check for latest
+      CNAMEPrefix: !Sub '${EnvironmentName}-${AWS::AccountId}'
+      OptionSettings:
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: InstanceType
+          Value: !Ref InstanceType
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile
+          Value: !Ref EBInstanceProfile
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DATABASE_URL
+          Value: !Sub 'postgres://${DBUser}:${DBPassword}@${DBInstance.Endpoint.Address}:5432/${DBName}'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: API_BASE_URL
+          Value: !Sub 'http://${EnvironmentName}-${AWS::AccountId}.${AWS::Region}.elasticbeanstalk.com'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: PORT
+          Value: '8080'
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: EnvironmentType
+          Value: SingleInstance # Free Tier
+
+  # --- IAM Roles for EB ---
+  EBInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkMulticontainerDocker
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier
+
+  EBInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EBInstanceRole
+
+  # --- Frontend (S3) ---
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-ui-${AWS::AccountId}' # Unique bucket name
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${FrontendBucket}/*'
+
+Outputs:
+  APIEndpoint:
+    Description: URL of the API
+    Value: !Ref EBEnvironment.EndpointURL
+  FrontendBucketName:
+    Description: Name of the S3 Bucket for Frontend
+    Value: !Ref FrontendBucket
+  UIEndpoint:
+    Description: URL of the Frontend website
+    Value: !GetAtt FrontendBucket.WebsiteURL
+  DBEndpoint:
+    Description: RDS Endpoint
+    Value: !GetAtt DBInstance.Endpoint.Address

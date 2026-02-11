@@ -1,0 +1,109 @@
+name: CD Pipeline
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1 # Change to your preferred region
+  STACK_NAME: e-commerce-stack
+  ENVIRONMENT_NAME: ecommerce
+
+jobs:
+  deploy-infra:
+    runs-on: ubuntu-latest
+    outputs:
+      api_endpoint: ${{ steps.get-outputs.outputs.APIEndpoint }}
+      ui_bucket: ${{ steps.get-outputs.outputs.FrontendBucketName }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Deploy CloudFormation Stack
+      run: |
+        aws cloudformation deploy \
+          --template-file infrastructure/aws-stack.yaml \
+          --stack-name ${{ env.STACK_NAME }} \
+          --capabilities CAPABILITY_IAM \
+          --parameter-overrides EnvironmentName=${{ env.ENVIRONMENT_NAME }}
+
+    - name: Get Stack Outputs
+      id: get-outputs
+      run: |
+        outputs=$(aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME }} --query "Stacks[0].Outputs" --output json)
+        echo "APIEndpoint=$(echo $outputs | jq -r '.[] | select(.OutputKey=="APIEndpoint") | .OutputValue')" >> $GITHUB_OUTPUT
+        echo "FrontendBucketName=$(echo $outputs | jq -r '.[] | select(.OutputKey=="FrontendBucketName") | .OutputValue')" >> $GITHUB_OUTPUT
+
+  deploy-backend:
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - name: Install Dependencies
+      run: npm ci
+      working-directory: ./API
+
+    - name: Build
+      run: npm run build
+      working-directory: ./API
+
+    - name: Create Zip Package
+      run: |
+        zip -r deploy.zip dist package.json package-lock.json
+      working-directory: ./API
+
+    - name: Deploy to Elastic Beanstalk
+      uses: einaregilsson/beanstalk-deploy@v22
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: ${{ env.ENVIRONMENT_NAME }}-api
+        environment_name: ${{ env.ENVIRONMENT_NAME }}-env
+        version_label: ${{ github.sha }}-${{ github.run_id }}
+        region: ${{ env.AWS_REGION }}
+        deployment_package: API/deploy.zip
+
+  deploy-frontend:
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Install Dependencies
+      run: npm ci
+      working-directory: ./UI
+
+    - name: Build
+      run: npm run build
+      env:
+        REACT_APP_API_URL: ${{ needs.deploy-infra.outputs.api_endpoint }}
+        CI: false
+      working-directory: ./UI
+
+    - name: Sync to S3
+      run: |
+        aws s3 sync build s3://${{ needs.deploy-infra.outputs.ui_bucket }} --delete
+      working-directory: ./UI
