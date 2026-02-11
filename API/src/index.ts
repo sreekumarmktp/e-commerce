@@ -71,7 +71,8 @@ const orderService = new OrderService(orderRepository, productRepository, notifi
 const productImageService = new ProductImageService(
   imageValidator,
   imageStorageService,
-  productImageRepository
+  productImageRepository,
+  productRepository
 );
 
 const authController = new AuthController(authService);

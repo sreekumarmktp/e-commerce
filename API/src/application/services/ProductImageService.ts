@@ -1,6 +1,7 @@
 import { IProductImageService } from '../../domain/services/IProductImageService';
 import { IImageStorageService } from '../../domain/services/IImageStorageService';
 import { IProductImageRepository } from '../../domain/repositories/IProductImageRepository';
+import { IProductRepository } from '../../domain/repositories/IProductRepository';
 import { ImageValidator } from '../../domain/services/ImageValidator';
 import {
   ProductImage,
@@ -25,7 +26,8 @@ export class ProductImageService implements IProductImageService {
   constructor(
     private imageValidator: ImageValidator,
     private imageStorageService: IImageStorageService,
-    private productImageRepository: IProductImageRepository
+    private productImageRepository: IProductImageRepository,
+    private productRepository: IProductRepository
   ) { }
 
   async uploadImages(
@@ -121,6 +123,9 @@ export class ProductImageService implements IProductImageService {
       }
     }
 
+    // Sync images to product table
+    await this.syncProductImages(productId);
+
     return uploadedImages;
   }
 
@@ -148,6 +153,9 @@ export class ProductImageService implements IProductImageService {
 
     // Update image orders in database
     await this.productImageRepository.updateImageOrder(productId, imageOrders);
+
+    // Sync images to product table
+    await this.syncProductImages(productId);
   }
 
   async setPrimaryImage(productId: string, imageId: string): Promise<void> {
@@ -166,6 +174,9 @@ export class ProductImageService implements IProductImageService {
 
     // Set as primary in database
     await this.productImageRepository.setPrimaryImage(productId, imageId);
+
+    // Sync images to product table
+    await this.syncProductImages(productId);
   }
 
   async deleteImage(imageId: string): Promise<void> {
@@ -195,9 +206,11 @@ export class ProductImageService implements IProductImageService {
 
     // If deleted image was primary, set first remaining image as primary
     if (image.isPrimary) {
-      const remainingImages = await this.productImageRepository.getProductImages(
+      const allImages = await this.productImageRepository.getProductImages(
         image.productId
       );
+
+      const remainingImages = allImages.filter(img => img.id !== imageId);
 
       if (remainingImages.length > 0) {
         // Set the first remaining image as primary
@@ -250,6 +263,26 @@ export class ProductImageService implements IProductImageService {
         // Stream is paused, resume it
         stream.resume();
       });
+    });
+  }
+
+  private async syncProductImages(productId: string): Promise<void> {
+    const images = await this.productImageRepository.getProductImages(productId);
+
+    // Sort by display order
+    const sortedImages = images.sort((a, b) => a.displayOrder - b.displayOrder);
+
+    // Find primary image (or first image if no primary)
+    const primaryImage = sortedImages.find(img => img.isPrimary) || sortedImages[0];
+    const primaryImageUrl = primaryImage ? primaryImage.imageUrl : '';
+
+    // Get all image URLs
+    const allImageUrls = sortedImages.map(img => img.imageUrl);
+
+    // Update product
+    await this.productRepository.update(productId, {
+      image: primaryImageUrl,
+      images: allImageUrls
     });
   }
 }

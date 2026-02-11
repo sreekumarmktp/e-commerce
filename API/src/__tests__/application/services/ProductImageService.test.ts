@@ -2,6 +2,7 @@ import { ProductImageService } from '../../../application/services/ProductImageS
 import { ImageValidator } from '../../../domain/services/ImageValidator';
 import { IImageStorageService } from '../../../domain/services/IImageStorageService';
 import { IProductImageRepository } from '../../../domain/repositories/IProductImageRepository';
+import { IProductRepository } from '../../../domain/repositories/IProductRepository';
 import { ValidationError } from '../../../domain/errors/ValidationError';
 import { NotFoundError } from '../../../domain/errors/NotFoundError';
 import { UploadedFile } from '../../../presentation/types/ImageUpload';
@@ -13,6 +14,7 @@ describe('ProductImageService', () => {
   let mockValidator: jest.Mocked<ImageValidator>;
   let mockStorageService: jest.Mocked<IImageStorageService>;
   let mockRepository: jest.Mocked<IProductImageRepository>;
+  let mockProductRepository: jest.Mocked<IProductRepository>;
 
   beforeEach(() => {
     mockValidator = {
@@ -38,7 +40,11 @@ describe('ProductImageService', () => {
       deleteImage: jest.fn(),
     } as any;
 
-    service = new ProductImageService(mockValidator, mockStorageService, mockRepository);
+    mockProductRepository = {
+      update: jest.fn(),
+    } as any;
+
+    service = new ProductImageService(mockValidator, mockStorageService, mockRepository, mockProductRepository);
   });
 
   describe('uploadImages', () => {
@@ -79,7 +85,25 @@ describe('ProductImageService', () => {
     });
 
     it('should successfully upload a single image', async () => {
-      mockRepository.getProductImages.mockResolvedValue([]);
+      const createdImage = {
+        id: 'db-image-1',
+        productId: 'product-1',
+        imagePath: 'image-id-1',
+        imageUrl: '/uploads/image-id-1',
+        isPrimary: true,
+        displayOrder: 0,
+        fileSize: 1000,
+        mimeType: 'image/jpeg',
+        width: 800,
+        height: 600,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as ProductImage;
+
+      mockRepository.getProductImages
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([createdImage]);
+
       mockValidator.validateAll.mockResolvedValue({
         valid: true,
         errors: [],
@@ -87,20 +111,8 @@ describe('ProductImageService', () => {
       });
       mockStorageService.uploadImage.mockResolvedValue('image-id-1');
       mockStorageService.getImageUrl.mockReturnValue('/uploads/image-id-1');
-      mockRepository.createImage.mockResolvedValue({
-        id: 'db-image-1',
-        productId: 'product-1',
-        imagePath: 'image-id-1',
-        imageUrl: '/uploads/image-id-1',
-        displayOrder: 0,
-        isPrimary: true,
-        fileSize: 50000,
-        mimeType: 'image/jpeg',
-        width: 800,
-        height: 600,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      mockRepository.createImage.mockResolvedValue(createdImage);
+
 
       const file: UploadedFile = {
         filename: 'test.jpg',
@@ -115,7 +127,12 @@ describe('ProductImageService', () => {
       expect(result[0].isPrimary).toBe(true);
       expect(result[0].displayOrder).toBe(0);
       expect(mockStorageService.uploadImage).toHaveBeenCalled();
+      // Verifying other calls
       expect(mockRepository.createImage).toHaveBeenCalled();
+      expect(mockProductRepository.update).toHaveBeenCalledWith('product-1', {
+        image: '/uploads/image-id-1',
+        images: ['/uploads/image-id-1']
+      });
     });
 
     it('should set first image as primary', async () => {

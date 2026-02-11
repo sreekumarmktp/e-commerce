@@ -45,9 +45,7 @@ export class S3ImageStorageService implements IImageStorageService {
   }
 
   getImageUrl(imageId: string): string {
-    // TODO: Implement signed URL generation
-    // 1. Generate signed URL for the image
-    // 2. Return URL with expiration (e.g., 1 hour)
-    throw new Error('S3ImageStorageService not yet implemented');
+    // Implement signed URL generation
+    return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${imageId}`;
   }
 }
