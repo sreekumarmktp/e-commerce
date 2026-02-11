@@ -1,0 +1,4 @@
+# Ignore everything in the uploads directory
+API/uploads/*
+# But keep the gitkeep file (so the directory itself is tracked)
+!API/uploads/.gitkeep

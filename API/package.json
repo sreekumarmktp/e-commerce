@@ -1,0 +1,51 @@
+{
+  "name": "e-commerce-api",
+  "version": "1.0.0",
+  "description": "E-commerce backend API with clean architecture",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "test": "jest",
+    "migrate:create": "ts-node scripts/run_migration.ts create --migration-file-language js",
+    "migrate:up": "ts-node scripts/run_migration.ts up",
+    "migrate:down": "ts-node scripts/run_migration.ts down",
+    "seed": "ts-node scripts/seed.ts"
+  },
+  "dependencies": {
+    "@fastify/compress": "^8.3.1",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/helmet": "^13.0.2",
+    "@fastify/multipart": "^9.4.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/static": "^9.0.0",
+    "@fastify/swagger": "^9.6.1",
+    "@fastify/swagger-ui": "^5.2.5",
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^7.0.9",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
+    "e-commerce-app": "file:..",
+    "fastify": "^5.7.4",
+    "jsonwebtoken": "^9.0.3",
+    "node-pg-migrate": "^8.0.4",
+    "nodemailer": "^8.0.0",
+    "pg": "^8.18.0",
+    "sharp": "^0.33.0",
+    "uuid": "^13.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.2.0",
+    "@types/pg": "^8.16.0",
+    "@types/uuid": "^11.0.0",
+    "fast-check": "^4.5.3",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,134 @@
+############################################
+# Node / JavaScript / TypeScript
+############################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+dist/
+build/
+out/
+.next/
+.next-cache/
+.turbo/
+.vercel/
+
+coverage/
+*.lcov
+
+############################################
+# React / Vite / Webpack
+############################################
+.vite/
+.eslintcache
+.parcel-cache/
+.cache/
+
+############################################
+# NestJS
+############################################
+dist/
+tmp/
+.nest/
+
+############################################
+# Python
+############################################
+__pycache__/
+*.py[cod]
+*$py.class
+
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+
+pip-wheel-metadata/
+pip-log.txt
+pip-delete-this-directory.txt
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+coverage.xml
+htmlcov/
+
+############################################
+# Jupyter / Data Science
+############################################
+.ipynb_checkpoints/
+
+############################################
+# Logs
+############################################
+logs/
+*.log
+
+############################################
+# OS / System files
+############################################
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+############################################
+# IDE / Editor
+############################################
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+.cursor/
+.history/
+
+############################################
+# Git
+############################################
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+############################################
+# Secrets / Keys
+############################################
+*.pem
+*.key
+*.crt
+*.pfx
+*.keystore
+secrets/
+credentials/
+
+############################################
+# Docker
+############################################
+docker-data/
+docker-volume/
+.docker/
+
+############################################
+# Test artifacts
+############################################
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+
+############################################
+# Misc
+############################################
+*.swp
+*.swo
+*.tmp
+*.bak
+*.old
+*.orig
