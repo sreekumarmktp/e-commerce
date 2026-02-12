@@ -4,7 +4,7 @@ Description: 'E-commerce App Infrastructure: S3 (Frontend), Elastic Beanstalk (B
 Parameters:
   EnvironmentName:
     Type: String
-    Default: 'e-commerce'
+    Default: 'production'
     Description: 'Environment name (e.g., dev, prod)'
   DBName:
     Type: String

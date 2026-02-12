@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: us-east-1 # Change to your preferred region
+  AWS_REGION: ap-south-2 # Change to your preferred region
   STACK_NAME: e-commerce-stack
-  ENVIRONMENT_NAME: ecommerce
+  ENVIRONMENT_NAME: production
 
 jobs:
   deploy-infra:
