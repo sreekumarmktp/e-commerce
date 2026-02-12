@@ -153,7 +153,7 @@ async function runMigrations() {
   app.log.info('Running database migrations...');
   try {
     const pgm = require('node-pg-migrate');
-    const runner = pgm.default || pgm;
+    const runner = pgm.runner || pgm.default || pgm;
     await runner({
       databaseUrl: {
         connectionString: databaseUrl,
