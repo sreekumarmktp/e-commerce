@@ -139,5 +139,5 @@ jobs:
 
     - name: Sync to S3
       run: |
-        aws s3 sync build s3://${{ needs.deploy-infra.outputs.ui_bucket }} --delete
+        aws s3 sync dist s3://${{ needs.deploy-infra.outputs.ui_bucket }} --delete
       working-directory: ./UI
