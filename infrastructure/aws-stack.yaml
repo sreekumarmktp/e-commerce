@@ -82,7 +82,7 @@ Resources:
     Properties:
       ApplicationName: !Ref EBApplication
       EnvironmentName: !Sub '${EnvironmentName}-env'
-      PlatformArn: 'arn:aws:elasticbeanstalk:ap-south-1::platform/Node.js 20 running on 64bit Amazon Linux 2023' # Check for latest
+      PlatformArn: 'arn:aws:elasticbeanstalk:ap-south-2::platform/Node.js 20 running on 64bit Amazon Linux 2023/6.7.3' # Check for latest
       CNAMEPrefix: !Sub '${EnvironmentName}-${AWS::AccountId}'
       OptionSettings:
         - Namespace: aws:autoscaling:launchconfiguration
