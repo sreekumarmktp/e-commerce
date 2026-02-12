@@ -1,30 +1,34 @@
-const { execSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
+
+function log(message) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}\n`;
+    console.log(message);
+    fs.appendFileSync('migration.log', logMessage);
+}
+
+log('Starting production migration runner...');
 
 // Ensure DATABASE_URL is available
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-    console.error('DATABASE_URL environment variable is not set.');
+    log('ERROR: DATABASE_URL environment variable is not set.');
     process.exit(1);
 }
 
-console.log('Running production migrations...');
-
 try {
-    // Use node-pg-migrate CLI directly
-    // We set rejectionUnauthorized to false via environment variable for the pg driver
-    // node-pg-migrate uses 'pg' internally.
-    const env = {
-        ...process.env,
-        // This is a common way to force SSL for pg when using a connection string
-        // but often we need to pass a config object. 
-        // node-pg-migrate's CLI is limited for SSL objects, so we use the database-url-var
-        // and hope the environment handles it, or we use a programmatic runner.
-    };
+    log(`Connecting to: ${databaseUrl.split('@')[1] || 'hidden'}`);
 
-    // Programmatic migration instead of CLI for better SSL control
+    // In Node 14+, 'node-pg-migrate' is the package name
+    // The programmatic runner is usually the default export
     const migrate = require('node-pg-migrate').default;
+
+    if (!migrate) {
+        log('ERROR: Could not find node-pg-migrate default export.');
+        process.exit(1);
+    }
 
     const options = {
         databaseUrl: {
@@ -34,19 +38,23 @@ try {
         dir: 'migrations',
         direction: 'up',
         migrationsTable: 'pgmigrations',
+        verbose: true
     };
 
+    log('Executing migrations...');
     migrate(options)
         .then(() => {
-            console.log('Migrations completed successfully.');
+            log('SUCCESS: Migrations completed successfully.');
             process.exit(0);
         })
         .catch((err) => {
-            console.error('Migration failed:', err);
+            log(`ERROR: Migration failed: ${err.message}`);
+            log(err.stack);
             process.exit(1);
         });
 
 } catch (error) {
-    console.error('Failed to initialize migration runner:', error);
+    log(`CRITICAL: Failed to initialize migration runner: ${error.message}`);
+    log(error.stack);
     process.exit(1);
 }

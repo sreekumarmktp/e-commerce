@@ -122,7 +122,8 @@ function buildServer(): FastifyInstance {
   });
   app.register(swaggerUI, { routePrefix: '/docs' });
 
-  // Health check endpoint
+  // Health check endpoints
+  app.get('/', async () => ({ status: 'OK', message: 'E-commerce API is running' }));
   app.get('/health', async () => ({ status: 'OK', timestamp: new Date().toISOString() }));
 
   // Routes
