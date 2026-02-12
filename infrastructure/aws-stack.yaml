@@ -82,7 +82,7 @@ Resources:
     Properties:
       ApplicationName: !Ref EBApplication
       EnvironmentName: !Sub '${EnvironmentName}-env'
-      SolutionStackName: '64bit Amazon Linux 2023 v6.3.2 running Node.js 20' # Check for latest
+      SolutionStackName: '64bit Amazon Linux 2023 v6.1.1 running Node.js 20' # Check for latest
       CNAMEPrefix: !Sub '${EnvironmentName}-${AWS::AccountId}'
       OptionSettings:
         - Namespace: aws:autoscaling:launchconfiguration

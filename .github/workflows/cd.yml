@@ -47,7 +47,7 @@ jobs:
           --template-file infrastructure/aws-stack.yaml \
           --stack-name ${{ env.STACK_NAME }} \
           --capabilities CAPABILITY_IAM \
-          --parameter-overrides EnvironmentName=${{ env.ENVIRONMENT_NAME }} DBPassword=${{ secrets.DB_PASSWORD }} VpcId=$VPC_ID
+          --parameter-overrides "EnvironmentName=${{ env.ENVIRONMENT_NAME }}" "DBPassword=${{ secrets.DB_PASSWORD }}" "VpcId=$VPC_ID"
 
     - name: Get Stack Outputs
       id: get-outputs
