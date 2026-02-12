@@ -63,7 +63,6 @@ Resources:
       AllocatedStorage: 20
       DBInstanceClass: db.t3.micro
       Engine: postgres
-      EngineVersion: '17.6-R2'
       MasterUsername: !Ref DBUser
       MasterUserPassword: !Ref DBPassword
       VPCSecurityGroups:
