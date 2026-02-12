@@ -153,7 +153,7 @@ Resources:
 Outputs:
   APIEndpoint:
     Description: URL of the API
-    Value: !Ref EBEnvironment.EndpointURL
+    Value: !GetAtt EBEnvironment.EndpointURL
   FrontendBucketName:
     Description: Name of the S3 Bucket for Frontend
     Value: !Ref FrontendBucket
