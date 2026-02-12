@@ -144,8 +144,38 @@ function buildServer(): FastifyInstance {
 
 const app = buildServer();
 
-app.listen({ port: PORT, host: '0.0.0.0' })
-  .then(() => {
+async function runMigrations() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl || !databaseUrl.includes('amazonaws.com')) {
+    return; // Skip migrations if not in AWS or no URL
+  }
+
+  app.log.info('Running database migrations...');
+  try {
+    const runner = require('node-pg-migrate').default;
+    await runner({
+      databaseUrl: {
+        connectionString: databaseUrl,
+        ssl: { rejectUnauthorized: false }
+      },
+      dir: path.join(process.cwd(), 'migrations'),
+      direction: 'up',
+      migrationsTable: 'pgmigrations',
+      verbose: true,
+    });
+    app.log.info('Migrations completed successfully.');
+  } catch (err: any) {
+    app.log.error('Migration failed:', err);
+    throw err;
+  }
+}
+
+async function start() {
+  try {
+    // Run migrations first
+    await runMigrations();
+
+    await app.listen({ port: PORT, host: '0.0.0.0' });
     app.log.info(`🚀 E-commerce API server running on port ${PORT}`);
     app.log.info(`📊 Health check: http://localhost:${PORT}/health`);
     app.log.info(`📚 Swagger UI: http://localhost:${PORT}/docs`);
@@ -155,8 +185,10 @@ app.listen({ port: PORT, host: '0.0.0.0' })
     app.log.info(`📦 Order API: http://localhost:${PORT}/api/orders`);
     app.log.info(`📤 Upload API: http://localhost:${PORT}/api/upload`);
     app.log.info(`📈 Report API: http://localhost:${PORT}/api/admin`);
-  })
-  .catch((err) => {
+  } catch (err) {
     app.log.error(err);
     process.exit(1);
-  });
+  }
+}
+
+start();
