@@ -102,9 +102,18 @@ jobs:
         node-version: '20.x'
 
     - name: Check AWS Credentials
+      env:
+        AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        DB_PWD: ${{ secrets.DB_PASSWORD }}
       run: |
-        if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ] || [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ] || [ -z "${{ secrets.DB_PASSWORD }}" ]; then
-          echo "::error::AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, or DB_PASSWORD secret is not set. Please add them to your repository secrets."
+        MISSING=""
+        if [ -z "$AWS_KEY" ]; then MISSING="$MISSING AWS_ACCESS_KEY_ID"; fi
+        if [ -z "$AWS_SECRET" ]; then MISSING="$MISSING AWS_SECRET_ACCESS_KEY"; fi
+        if [ -z "$DB_PWD" ]; then MISSING="$MISSING DB_PASSWORD"; fi
+        
+        if [ ! -z "$MISSING" ]; then
+          echo "::error::The following secrets are missing or empty:$MISSING. Please ensure they are added as REPOSITORY secrets (Settings > Secrets and variables > Actions > Secrets > Repository secrets) in your GitHub settings."
           exit 1
         fi
 
