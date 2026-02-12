@@ -9,6 +9,7 @@ import swaggerUI from '@fastify/swagger-ui';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
+import pgmRunner from 'node-pg-migrate';
 
 import { ProductService } from './application/services/ProductService';
 import { CartService } from './application/services/CartService';
@@ -152,8 +153,7 @@ async function runMigrations() {
 
   app.log.info('Running database migrations...');
   try {
-    const runner = require('node-pg-migrate').default;
-    await runner({
+    await (pgmRunner as any)({
       databaseUrl: {
         connectionString: databaseUrl,
         ssl: { rejectUnauthorized: false }
