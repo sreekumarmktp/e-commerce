@@ -123,6 +123,21 @@ export class ImageValidator {
   }
 
   /**
+   * Validates image dimensions (backward compatibility)
+   * @param buffer The image file buffer
+   * @returns Promise resolving to validation result
+   */
+  public async validateDimensions(
+    buffer: Buffer
+  ): Promise<ImageValidationResult> {
+    const result = await this.validateDimensionsWithMetadata(buffer);
+    return {
+      valid: result.valid,
+      errors: result.errors,
+    };
+  }
+
+  /**
    * Validates all aspects of an image file: format, size, and dimensions
    * Returns metadata to avoid duplicate sharp() calls
    * @param file The uploaded file to validate

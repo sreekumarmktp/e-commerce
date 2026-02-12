@@ -1,9 +1,14 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+const dotenv = require('dotenv');
+
+// Load environment variables from .env file
+dotenv.config();
 
 module.exports = {
   // The entry point for our application
-  entry: './src/index.tsx', 
+  entry: './src/index.tsx',
 
   // The output directory and filename for the bundled code
   output: {
@@ -37,6 +42,9 @@ module.exports = {
 
   // Plugins
   plugins: [
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env),
+    }),
     new HtmlWebpackPlugin({
       template: './public/index.html',
       inject: 'body',

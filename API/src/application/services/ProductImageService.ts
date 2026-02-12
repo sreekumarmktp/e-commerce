@@ -220,6 +220,9 @@ export class ProductImageService implements IProductImageService {
         );
       }
     }
+
+    // Sync images to product table
+    await this.syncProductImages(image.productId);
   }
 
   async getProductImages(productId: string): Promise<ProductImage[]> {
@@ -231,7 +234,11 @@ export class ProductImageService implements IProductImageService {
    * @param stream The readable stream
    * @returns Promise resolving to the buffer
    */
-  private streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+  private streamToBuffer(stream: NodeJS.ReadableStream | Buffer): Promise<Buffer> {
+    if (Buffer.isBuffer(stream)) {
+      return Promise.resolve(stream);
+    }
+
     return new Promise((resolve, reject) => {
       const chunks: Buffer[] = [];
       let timeoutId: NodeJS.Timeout;

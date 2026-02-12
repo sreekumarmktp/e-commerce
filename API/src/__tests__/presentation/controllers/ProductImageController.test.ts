@@ -4,6 +4,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { ValidationError } from '../../../domain/errors/ValidationError';
 import { NotFoundError } from '../../../domain/errors/NotFoundError';
 import { ProductImage } from '../../../domain/entities/ProductImage';
+import { Readable } from 'stream';
 
 describe('ProductImageController', () => {
   let controller: ProductImageController;
@@ -31,8 +32,8 @@ describe('ProductImageController', () => {
     it('should return 201 with uploaded images', async () => {
       const mockImages: ProductImage[] = [
         {
-          id: 'img-1',
-          productId: 'product-1',
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-1',
           imageUrl: 'url-1',
           displayOrder: 0,
@@ -49,7 +50,7 @@ describe('ProductImageController', () => {
       mockService.uploadImages.mockResolvedValue(mockImages);
 
       const mockRequest = {
-        params: { productId: 'product-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000' },
         parts: jest.fn(),
       } as any;
 
@@ -60,7 +61,7 @@ describe('ProductImageController', () => {
           filename: 'test.jpg',
           encoding: '7bit',
           mimetype: 'image/jpeg',
-          file: { on: jest.fn() },
+          file: Readable.from([Buffer.from('test data')]),
         };
       };
 
@@ -76,12 +77,12 @@ describe('ProductImageController', () => {
 
     it('should return 400 if no files provided', async () => {
       const mockRequest = {
-        params: { productId: 'product-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000' },
         parts: jest.fn(),
       } as any;
 
       // Mock empty parts
-      mockRequest.parts = async function* () {};
+      mockRequest.parts = async function* () { };
 
       await controller.uploadImages(mockRequest, mockReply);
 
@@ -98,7 +99,7 @@ describe('ProductImageController', () => {
       );
 
       const mockRequest = {
-        params: { productId: 'product-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000' },
         parts: jest.fn(),
       } as any;
 
@@ -108,7 +109,7 @@ describe('ProductImageController', () => {
           filename: 'test.jpg',
           encoding: '7bit',
           mimetype: 'image/jpeg',
-          file: { on: jest.fn() },
+          file: Readable.from([Buffer.from('test data')]),
         };
       };
 
@@ -124,10 +125,14 @@ describe('ProductImageController', () => {
 
   describe('reorderImages', () => {
     it('should successfully reorder images', async () => {
+      const productId = '550e8400-e29b-41d4-a716-446655440000';
+      const img1Id = '550e8400-e29b-41d4-a716-446655440001';
+      const img2Id = '550e8400-e29b-41d4-a716-446655440002';
+
       const mockImages: ProductImage[] = [
         {
-          id: 'img-1',
-          productId: 'product-1',
+          id: img1Id,
+          productId: productId,
           imagePath: 'path-1',
           imageUrl: 'url-1',
           displayOrder: 1,
@@ -140,8 +145,8 @@ describe('ProductImageController', () => {
           updatedAt: new Date(),
         },
         {
-          id: 'img-2',
-          productId: 'product-1',
+          id: img2Id,
+          productId: productId,
           imagePath: 'path-2',
           imageUrl: 'url-2',
           displayOrder: 0,
@@ -159,11 +164,11 @@ describe('ProductImageController', () => {
       mockService.getProductImages.mockResolvedValue(mockImages);
 
       const mockRequest = {
-        params: { productId: 'product-1' },
+        params: { productId },
         body: {
           imageOrders: [
-            { imageId: 'img-1', newOrder: 1 },
-            { imageId: 'img-2', newOrder: 0 },
+            { imageId: img1Id, newOrder: 1 },
+            { imageId: img2Id, newOrder: 0 },
           ],
         },
       } as any;
@@ -178,14 +183,16 @@ describe('ProductImageController', () => {
     });
 
     it('should handle validation errors during reorder', async () => {
+      const productId = '550e8400-e29b-41d4-a716-446655440000';
+      const img1Id = '550e8400-e29b-41d4-a716-446655440001';
       mockService.reorderImages.mockRejectedValue(
         new ValidationError('Image does not belong to product')
       );
 
       const mockRequest = {
-        params: { productId: 'product-1' },
+        params: { productId },
         body: {
-          imageOrders: [{ imageId: 'img-1', newOrder: 0 }],
+          imageOrders: [{ imageId: img1Id, newOrder: 0 }],
         },
       } as any;
 
@@ -203,8 +210,8 @@ describe('ProductImageController', () => {
     it('should successfully set primary image', async () => {
       const mockImages: ProductImage[] = [
         {
-          id: 'img-1',
-          productId: 'product-1',
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-1',
           imageUrl: 'url-1',
           displayOrder: 0,
@@ -222,7 +229,7 @@ describe('ProductImageController', () => {
       mockService.getProductImages.mockResolvedValue(mockImages);
 
       const mockRequest = {
-        params: { productId: 'product-1', imageId: 'img-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000', imageId: '550e8400-e29b-41d4-a716-446655440001' },
       } as any;
 
       await controller.setPrimaryImage(mockRequest, mockReply);
@@ -240,7 +247,7 @@ describe('ProductImageController', () => {
       );
 
       const mockRequest = {
-        params: { productId: 'product-1', imageId: 'img-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000', imageId: '550e8400-e29b-41d4-a716-446655440001' },
       } as any;
 
       await controller.setPrimaryImage(mockRequest, mockReply);
@@ -257,8 +264,8 @@ describe('ProductImageController', () => {
     it('should successfully delete image', async () => {
       const mockImages: ProductImage[] = [
         {
-          id: 'img-2',
-          productId: 'product-1',
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-2',
           imageUrl: 'url-2',
           displayOrder: 0,
@@ -276,7 +283,7 @@ describe('ProductImageController', () => {
       mockService.getProductImages.mockResolvedValue(mockImages);
 
       const mockRequest = {
-        params: { productId: 'product-1', imageId: 'img-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000', imageId: '550e8400-e29b-41d4-a716-446655440001' },
       } as any;
 
       await controller.deleteImage(mockRequest, mockReply);
@@ -294,7 +301,7 @@ describe('ProductImageController', () => {
       );
 
       const mockRequest = {
-        params: { productId: 'product-1', imageId: 'img-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000', imageId: '550e8400-e29b-41d4-a716-446655440001' },
       } as any;
 
       await controller.deleteImage(mockRequest, mockReply);
@@ -311,8 +318,8 @@ describe('ProductImageController', () => {
     it('should return product images', async () => {
       const mockImages: ProductImage[] = [
         {
-          id: 'img-1',
-          productId: 'product-1',
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-1',
           imageUrl: 'url-1',
           displayOrder: 0,
@@ -329,7 +336,7 @@ describe('ProductImageController', () => {
       mockService.getProductImages.mockResolvedValue(mockImages);
 
       const mockRequest = {
-        params: { productId: 'product-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000' },
       } as any;
 
       await controller.getProductImages(mockRequest, mockReply);
@@ -347,7 +354,7 @@ describe('ProductImageController', () => {
       );
 
       const mockRequest = {
-        params: { productId: 'product-1' },
+        params: { productId: '550e8400-e29b-41d4-a716-446655440000' },
       } as any;
 
       await controller.getProductImages(mockRequest, mockReply);

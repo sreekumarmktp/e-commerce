@@ -136,7 +136,12 @@ describe('ProductImageService', () => {
     });
 
     it('should set first image as primary', async () => {
-      mockRepository.getProductImages.mockResolvedValue([]);
+      mockRepository.getProductImages
+        .mockResolvedValueOnce([]) // Initial check
+        .mockResolvedValueOnce([
+          { id: 'db-image-1', productId: 'product-1', isPrimary: true, imageUrl: '/uploads/image-id-1' }
+        ] as any); // Sync check
+
       mockValidator.validateAll.mockResolvedValue({
         valid: true,
         errors: [],
@@ -147,17 +152,10 @@ describe('ProductImageService', () => {
       mockRepository.createImage.mockResolvedValue({
         id: 'db-image-1',
         productId: 'product-1',
-        imagePath: 'image-id-1',
         imageUrl: '/uploads/image-id-1',
-        displayOrder: 0,
         isPrimary: true,
-        fileSize: 50000,
-        mimeType: 'image/jpeg',
-        width: 800,
-        height: 600,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+        displayOrder: 0
+      } as any);
 
       const file: UploadedFile = {
         filename: 'test.jpg',
@@ -169,6 +167,7 @@ describe('ProductImageService', () => {
       const result = await service.uploadImages('product-1', [file]);
 
       expect(result[0].isPrimary).toBe(true);
+      expect(mockProductRepository.update).toHaveBeenCalled();
     });
 
     it('should throw error if validation fails', async () => {
@@ -206,7 +205,10 @@ describe('ProductImageService', () => {
         updatedAt: new Date(),
       };
 
-      mockRepository.getProductImages.mockResolvedValue([existingImage]);
+      mockRepository.getProductImages
+        .mockResolvedValueOnce([existingImage]) // Initial check
+        .mockResolvedValueOnce([existingImage, { id: 'db-image-2', imageUrl: '/uploads/image-id-2' }, { id: 'db-image-3', imageUrl: '/uploads/image-id-3' }] as any); // Sync check
+
       mockValidator.validateAll.mockResolvedValue({
         valid: true,
         errors: [],
@@ -271,6 +273,7 @@ describe('ProductImageService', () => {
       expect(result[1].displayOrder).toBe(2);
       expect(result[0].isPrimary).toBe(false);
       expect(result[1].isPrimary).toBe(false);
+      expect(mockProductRepository.update).toHaveBeenCalled();
     });
   });
 
@@ -340,6 +343,17 @@ describe('ProductImageService', () => {
 
       mockRepository.updateImageOrder.mockResolvedValue(undefined);
 
+      // Configure getProductImages for BOTH the validation call and the sync call
+      mockRepository.getProductImages
+        .mockResolvedValueOnce([
+          { id: 'img-1', productId: 'product-1', displayOrder: 0, imageUrl: 'url-1' },
+          { id: 'img-2', productId: 'product-1', displayOrder: 1, imageUrl: 'url-2' }
+        ] as any)
+        .mockResolvedValueOnce([
+          { id: 'img-2', productId: 'product-1', displayOrder: 0, imageUrl: 'url-2' },
+          { id: 'img-1', productId: 'product-1', displayOrder: 1, imageUrl: 'url-1' }
+        ] as any);
+
       await service.reorderImages('product-1', [
         { imageId: 'img-1', newOrder: 1 },
         { imageId: 'img-2', newOrder: 0 },
@@ -349,6 +363,7 @@ describe('ProductImageService', () => {
         { imageId: 'img-1', newOrder: 1 },
         { imageId: 'img-2', newOrder: 0 },
       ]);
+      expect(mockProductRepository.update).toHaveBeenCalled();
     });
   });
 
@@ -399,10 +414,23 @@ describe('ProductImageService', () => {
       });
 
       mockRepository.setPrimaryImage.mockResolvedValue(undefined);
+      mockRepository.getProductImages.mockResolvedValue([
+        {
+          id: 'img-1',
+          productId: 'product-1',
+          imageUrl: 'url-1',
+          isPrimary: true,
+          displayOrder: 0
+        }
+      ] as any);
 
       await service.setPrimaryImage('product-1', 'img-1');
 
       expect(mockRepository.setPrimaryImage).toHaveBeenCalledWith('product-1', 'img-1');
+      expect(mockProductRepository.update).toHaveBeenCalledWith('product-1', {
+        image: 'url-1',
+        images: ['url-1']
+      });
     });
   });
 
@@ -496,6 +524,15 @@ describe('ProductImageService', () => {
         },
       ]);
 
+      mockRepository.getProductImages
+        .mockResolvedValueOnce([
+          { id: 'img-1', productId: 'product-1', displayOrder: 0, isPrimary: false },
+          { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: true }
+        ] as any) // For validation check
+        .mockResolvedValueOnce([
+          { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: true, imageUrl: 'url-2' }
+        ] as any); // For sync
+
       mockStorageService.deleteImage.mockResolvedValue(undefined);
       mockRepository.deleteImage.mockResolvedValue(undefined);
 
@@ -503,6 +540,7 @@ describe('ProductImageService', () => {
 
       expect(mockStorageService.deleteImage).toHaveBeenCalledWith('path-1');
       expect(mockRepository.deleteImage).toHaveBeenCalledWith('img-1');
+      expect(mockProductRepository.update).toHaveBeenCalled();
     });
 
     it('should set new primary image when deleting primary', async () => {
@@ -521,36 +559,17 @@ describe('ProductImageService', () => {
         updatedAt: new Date(),
       });
 
-      mockRepository.getProductImages.mockResolvedValue([
-        {
-          id: 'img-1',
-          productId: 'product-1',
-          imagePath: 'path-1',
-          imageUrl: 'url-1',
-          displayOrder: 0,
-          isPrimary: true,
-          fileSize: 1000,
-          mimeType: 'image/jpeg',
-          width: 800,
-          height: 600,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: 'img-2',
-          productId: 'product-1',
-          imagePath: 'path-2',
-          imageUrl: 'url-2',
-          displayOrder: 1,
-          isPrimary: false,
-          fileSize: 1000,
-          mimeType: 'image/jpeg',
-          width: 800,
-          height: 600,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ]);
+      mockRepository.getProductImages
+        .mockResolvedValueOnce([
+          { id: 'img-1', productId: 'product-1', displayOrder: 0, isPrimary: true },
+          { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: false }
+        ] as any) // For validation check
+        .mockResolvedValueOnce([
+          { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: false }
+        ] as any) // For primary reassignment check
+        .mockResolvedValueOnce([
+          { id: 'img-2', productId: 'product-1', displayOrder: 0, isPrimary: true, imageUrl: 'url-2' }
+        ] as any); // For sync
 
       mockStorageService.deleteImage.mockResolvedValue(undefined);
       mockRepository.deleteImage.mockResolvedValue(undefined);
@@ -559,6 +578,7 @@ describe('ProductImageService', () => {
       await service.deleteImage('img-1');
 
       expect(mockRepository.setPrimaryImage).toHaveBeenCalledWith('product-1', 'img-2');
+      expect(mockProductRepository.update).toHaveBeenCalled();
     });
   });
 
