@@ -17,6 +17,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Check AWS Credentials
+      run: |
+        if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ] || [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ] || [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+          echo "::error::AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, or DB_PASSWORD secret is not set. Please add them to your repository secrets."
+          exit 1
+        fi
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -30,7 +37,7 @@ jobs:
           --template-file infrastructure/aws-stack.yaml \
           --stack-name ${{ env.STACK_NAME }} \
           --capabilities CAPABILITY_IAM \
-          --parameter-overrides EnvironmentName=${{ env.ENVIRONMENT_NAME }}
+          --parameter-overrides EnvironmentName=${{ env.ENVIRONMENT_NAME }} DBPassword=${{ secrets.DB_PASSWORD }}
 
     - name: Get Stack Outputs
       id: get-outputs
@@ -84,6 +91,13 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
+
+    - name: Check AWS Credentials
+      run: |
+        if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ] || [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ] || [ -z "${{ secrets.DB_PASSWORD }}" ]; then
+          echo "::error::AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, or DB_PASSWORD secret is not set. Please add them to your repository secrets."
+          exit 1
+        fi
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
