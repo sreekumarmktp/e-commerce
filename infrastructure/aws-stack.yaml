@@ -172,7 +172,7 @@ Resources:
 Outputs:
   APIEndpoint:
     Description: URL of the API
-    Value: !GetAtt EBEnvironment.EndpointURL
+    Value: !Sub 'http://${EnvironmentName}-${AWS::AccountId}.${AWS::Region}.elasticbeanstalk.com'
   FrontendBucketName:
     Description: Name of the S3 Bucket for Frontend
     Value: !Ref FrontendBucket
