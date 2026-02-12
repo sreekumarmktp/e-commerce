@@ -87,7 +87,9 @@ function buildServer(): FastifyInstance {
     bodyLimit: 10 * 1024 * 1024, // 10MB body limit
   });
 
-  app.register(helmet);
+  app.register(helmet, {
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  });
   app.register(cors, { origin: true });
   app.register(rateLimit, { max: 200, timeWindow: '1 minute' });
   app.register(multipart, {
