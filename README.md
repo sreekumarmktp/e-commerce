@@ -85,6 +85,31 @@ DB_NAME=ecommerce
 npm run dev
 ```
 
+### 👤 Default Admin Credentials
+After running the seed script, you can log in to the Admin Dashboard using:
+*   **Email:** `sreekumaronit@gmail.com`
+*   **Password:** `Admin@123`
+
+## 🌐 Production Maintenance
+
+When deploying to production (e.g., AWS RDS), use the following specialized scripts for database management. These scripts are optimized for cloud environments and support SSL connections.
+
+### 1. Database Migrations
+To apply schema changes to your production database:
+```bash
+# Using PowerShell
+$env:DATABASE_URL="postgres://user:password@host:5432/dbname"; npm run migrate:prod
+```
+
+### 2. Database Seeding
+To populate your production database with initial sample data (Admin user, Categories, Products):
+```bash
+# Using PowerShell
+$env:DATABASE_URL="postgres://user:password@host:5432/dbname"; npm run seed:prod
+```
+
+> **Note:** The `DATABASE_URL` should follow the format: `postgres://username:password@rds-endpoint:5432/database_name`. If using AWS RDS, SSL will be automatically enabled for secure communication.
+
 ## 🔌 API Endpoints
 
 ### 🔐 Auth

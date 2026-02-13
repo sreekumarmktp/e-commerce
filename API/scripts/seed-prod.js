@@ -1,22 +1,23 @@
-import { Pool } from 'pg';
-import dotenv from 'dotenv';
-import path from 'path';
-import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
+const { Pool } = require('pg');
+const dotenv = require('dotenv');
+const path = require('path');
+const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 
 // Load env vars
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const isAws = process.env.DATABASE_URL?.includes('amazonaws.com');
-const pool = new Pool(process.env.DATABASE_URL ? {
-    connectionString: process.env.DATABASE_URL,
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+    console.error('DATABASE_URL environment variable is required for production seeding');
+    process.exit(1);
+}
+
+const isAws = databaseUrl.includes('amazonaws.com');
+
+const pool = new Pool({
+    connectionString: databaseUrl,
     ssl: isAws ? { rejectUnauthorized: false } : false
-} : {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 5432,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'ecommerce',
 });
 
 const sampleProducts = [
@@ -184,7 +185,7 @@ const sampleProducts = [
 
 async function seed() {
     try {
-        console.log('Seeding database...');
+        console.log('Seeding production database...');
 
         // Seed default cart
         await pool.query(`
@@ -238,10 +239,10 @@ async function seed() {
         }
         console.log('Sample products seeded.');
 
-        console.log('Database seeding completed successfully.');
+        console.log('Production database seeding completed successfully.');
         process.exit(0);
     } catch (error) {
-        console.error('Error seeding database:', error);
+        console.error('Error seeding production database:', error);
         process.exit(1);
     } finally {
         await pool.end();

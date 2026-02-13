@@ -10,9 +10,15 @@
     "build": "cd UI && npm run build",
     "install:all": "npm install && cd API && npm install && cd ../UI && npm install",
     "test": "cd API && npm test && cd ../UI && npm test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "seed:prod": "cd API && npm run seed:prod"
   },
-  "keywords": ["e-commerce", "react", "nodejs", "typescript"],
+  "keywords": [
+    "e-commerce",
+    "react",
+    "nodejs",
+    "typescript"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
