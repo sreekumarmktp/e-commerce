@@ -50,13 +50,23 @@ Resources:
   DBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow DB access from EB
+      GroupDescription: Allow DB access from EB and External Clients
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
           SourceSecurityGroupId: !GetAtt InstanceSecurityGroup.GroupId
+        - IpProtocol: tcp # Allow external access for DBeaver/clients
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds: !Ref Subnets
 
   # --- Database (RDS) ---
   DBInstance:
@@ -70,7 +80,8 @@ Resources:
       MasterUserPassword: !Ref DBPassword
       VPCSecurityGroups:
         - !GetAtt DBSecurityGroup.GroupId
-      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: true
       MultiAZ: false # Keep false for Free Tier
 
   # --- Backend (Elastic Beanstalk) ---
@@ -85,7 +96,7 @@ Resources:
     Properties:
       ApplicationName: !Ref EBApplication
       EnvironmentName: !Sub '${EnvironmentName}-env'
-      PlatformArn: 'arn:aws:elasticbeanstalk:ap-south-2::platform/Node.js 20 running on 64bit Amazon Linux 2023/6.7.3' # Check for latest
+      PlatformArn: 'arn:aws:elasticbeanstalk:ap-south-2::platform/Node.js 22 running on 64bit Amazon Linux 2023/6.7.4' # Check for latest
       CNAMEPrefix: !Sub '${EnvironmentName}-${AWS::AccountId}'
       OptionSettings:
         - Namespace: aws:autoscaling:launchconfiguration
