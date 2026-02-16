@@ -90,18 +90,60 @@ After running the seed script, you can log in to the Admin Dashboard using:
 *   **Email:** `sreekumaronit@gmail.com`
 *   **Password:** `Admin@123`
 
-## 🌐 Production Maintenance
+## 🌐 AWS Deployment
+
+### Infrastructure Overview
+
+The application can be deployed to AWS using CloudFormation with the following resources:
+- **S3 Bucket**: Hosts the React frontend (static website)
+- **Elastic Beanstalk**: Runs the Node.js backend API
+- **RDS PostgreSQL**: Managed database instance
+- **Lambda Function**: Automatic S3 bucket cleanup on stack deletion
+
+### Deploy to AWS
+
+```bash
+# Using Bash
+cd infrastructure
+./deploy-stack.sh
+
+# Using PowerShell
+cd infrastructure
+.\deploy-stack.ps1
+```
+
+The deployment script will:
+1. Detect your default VPC and subnets
+2. Create or update the CloudFormation stack
+3. Deploy all infrastructure resources
+4. Output the API and UI endpoints
+
+### Stack Deletion
+
+To delete the entire infrastructure stack:
+
+```bash
+# Using AWS CLI
+aws cloudformation delete-stack --stack-name e-commerce-stack --region ap-south-2
+
+# Or using AWS Console
+# Go to CloudFormation → Select stack → Delete
+```
+
+**Important**: The S3 bucket will be automatically emptied before deletion. No manual cleanup required!
+
+### Production Database Maintenance
 
 When deploying to production (e.g., AWS RDS), use the following specialized scripts for database management. These scripts are optimized for cloud environments and support SSL connections.
 
-### 1. Database Migrations
+#### 1. Database Migrations
 To apply schema changes to your production database:
 ```bash
 # Using PowerShell
 $env:DATABASE_URL="postgres://user:password@host:5432/dbname"; npm run migrate:prod
 ```
 
-### 2. Database Seeding
+#### 2. Database Seeding
 To populate your production database with initial sample data (Admin user, Categories, Products):
 ```bash
 # Using PowerShell
