@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-    Box, 
-    Button, 
-    TextField, 
-    Typography, 
-    Paper, 
-    Alert, 
-    CircularProgress, 
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Paper,
+    Alert,
+    CircularProgress,
     Switch,
     FormControlLabel,
     Chip,
     IconButton
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { 
-    fetchProductById, 
-    addProduct, 
+import {
+    fetchProductById,
+    addProduct,
     updateProduct,
     toggleProductVariants,
     addProductSize,
@@ -58,7 +58,7 @@ const AdminProductForm: React.FC = () => {
         colors: '',
     });
 
-    
+
     // Variant management state
     const [sizesEnabled, setSizesEnabled] = useState(true);
     const [colorsEnabled, setColorsEnabled] = useState(true);
@@ -221,22 +221,14 @@ const AdminProductForm: React.FC = () => {
             colors: colors,
             sizesEnabled: sizesEnabled,
             colorsEnabled: colorsEnabled,
-            // Images are managed separately through ImageUploadZone and ImageGallery
-            // Form submission does not include image data
+            // primaryImagePath is the source of truth now
+            primaryImagePath: selectedProduct?.primaryImagePath || selectedProduct?.image || '',
             image: selectedProduct?.image || '',
             images: productImages.map(img => img.imageUrl),
         };
 
-        // Remove the string versions before sending
-        const { sizes: __, colors: ___, ...cleanData } = productData;
         const finalData = {
-            ...cleanData,
-            sizes: productData.sizes,
-            colors: productData.colors,
-            sizesEnabled: productData.sizesEnabled,
-            colorsEnabled: productData.colorsEnabled,
-            image: productData.image,
-            images: productData.images,
+            ...productData,
         };
 
         if (isEditMode && id) {
@@ -317,7 +309,7 @@ const AdminProductForm: React.FC = () => {
                         }
                         label="Enable Sizes"
                     />
-                    
+
                     {sizesEnabled && (
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>
@@ -339,7 +331,7 @@ const AdminProductForm: React.FC = () => {
                                     </Typography>
                                 )}
                             </Box>
-                            
+
                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                 <TextField
                                     size="small"
@@ -354,8 +346,8 @@ const AdminProductForm: React.FC = () => {
                                     }}
                                     placeholder="e.g., S, M, L, XL"
                                 />
-                                <IconButton 
-                                    color="primary" 
+                                <IconButton
+                                    color="primary"
                                     onClick={handleAddSize}
                                     aria-label="add size"
                                 >
@@ -378,7 +370,7 @@ const AdminProductForm: React.FC = () => {
                         }
                         label="Enable Colors"
                     />
-                    
+
                     {colorsEnabled && (
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle2" gutterBottom>
@@ -400,7 +392,7 @@ const AdminProductForm: React.FC = () => {
                                     </Typography>
                                 )}
                             </Box>
-                            
+
                             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                 <TextField
                                     size="small"
@@ -415,8 +407,8 @@ const AdminProductForm: React.FC = () => {
                                     }}
                                     placeholder="e.g., Red, Blue, Green"
                                 />
-                                <IconButton 
-                                    color="secondary" 
+                                <IconButton
+                                    color="secondary"
                                     onClick={handleAddColor}
                                     aria-label="add color"
                                 >

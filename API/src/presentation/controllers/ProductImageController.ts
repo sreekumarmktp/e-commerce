@@ -11,8 +11,30 @@ import { reorderImagesBodySchema } from '../schemas/productImageSchemas';
  * Manages multipart file uploads, image reordering, primary image designation,
  * and image deletion with proper validation and error handling
  */
+import { IImageStorageService } from '../../domain/services/IImageStorageService';
+import { ProductImage } from '../../domain/entities/ProductImage';
+
+/**
+ * ProductImageController handles HTTP requests for product image operations
+ * Manages multipart file uploads, image reordering, primary image designation,
+ * and image deletion with proper validation and error handling
+ */
 export class ProductImageController {
-  constructor(private productImageService: IProductImageService) { }
+  constructor(
+    private productImageService: IProductImageService,
+    private imageStorageService: IImageStorageService
+  ) { }
+
+  private mapToResponse(image: ProductImage) {
+    return {
+      ...image,
+      imageUrl: this.imageStorageService.getImageUrl(image.imagePath)
+    };
+  }
+
+  private mapListToResponse(images: ProductImage[]) {
+    return images.map(img => this.mapToResponse(img));
+  }
 
   /**
    * Upload multiple images for a product
@@ -107,7 +129,7 @@ export class ProductImageController {
 
       reply.code(201).send({
         success: true,
-        data: uploadedImages,
+        data: this.mapListToResponse(uploadedImages),
         message: `${uploadedImages.length} image(s) uploaded successfully`,
       });
     } catch (error) {
@@ -142,7 +164,7 @@ export class ProductImageController {
 
       reply.send({
         success: true,
-        data: updatedImages,
+        data: this.mapListToResponse(updatedImages),
         message: 'Images reordered successfully',
       });
     } catch (error) {
@@ -176,7 +198,7 @@ export class ProductImageController {
 
       reply.send({
         success: true,
-        data: updatedImages,
+        data: this.mapListToResponse(updatedImages),
         message: 'Primary image set successfully',
       });
     } catch (error) {
@@ -210,7 +232,7 @@ export class ProductImageController {
 
       reply.send({
         success: true,
-        data: updatedImages,
+        data: this.mapListToResponse(updatedImages),
         message: 'Image deleted successfully',
       });
     } catch (error) {
@@ -234,7 +256,7 @@ export class ProductImageController {
 
       reply.send({
         success: true,
-        data: images,
+        data: this.mapListToResponse(images),
         message: 'Product images retrieved successfully',
       });
     } catch (error) {

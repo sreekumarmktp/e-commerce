@@ -137,7 +137,7 @@ const ProductList: React.FC = () => {
                 <CardMedia
                   component="img"
                   height="450"
-                  image={getImageUrl(product.image) || '/placeholder-image.png'}
+                  image={getImageUrl(product.image || '') || '/placeholder-image.png'}
                   alt={product.name}
                   sx={{
                     objectFit: 'cover',

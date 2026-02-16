@@ -3,7 +3,7 @@
  * @param imagePath - The image path or filename
  * @returns Full URL to the image
  */
-export const getImageUrl = (imagePath: string): string => {
+export const getImageUrl = (imagePath: string | undefined): string => {
   if (!imagePath) return '';
 
   // If it's already a full URL, return as-is

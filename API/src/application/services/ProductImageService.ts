@@ -101,7 +101,6 @@ export class ProductImageService implements IProductImageService {
         // Create image record in database using metadata from validation
         const imageData: ProductImageData = {
           imagePath: imageId,
-          imageUrl,
           displayOrder,
           isPrimary,
           fileSize: buffer.length,
@@ -281,15 +280,13 @@ export class ProductImageService implements IProductImageService {
 
     // Find primary image (or first image if no primary)
     const primaryImage = sortedImages.find(img => img.isPrimary) || sortedImages[0];
-    const primaryImageUrl = primaryImage ? primaryImage.imageUrl : '';
-
-    // Get all image URLs
-    const allImageUrls = sortedImages.map(img => img.imageUrl);
+    const primaryImagePath = primaryImage ? primaryImage.imagePath : '';
+    const primaryImageId = primaryImage ? primaryImage.id : undefined;
 
     // Update product
     await this.productRepository.update(productId, {
-      image: primaryImageUrl,
-      images: allImageUrls
+      primaryImagePath,
+      primaryImageId
     });
   }
 }

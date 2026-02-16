@@ -31,14 +31,13 @@ export class ProductRepository implements IProductRepository {
 
     await dbRun(
       this.db,
-      'INSERT INTO products (id, name, description, price, image, images, sizes, colors, sizes_enabled, colors_enabled, category, stock, createdAt, updatedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)',
+      'INSERT INTO products (id, name, description, price, primary_image_path, sizes, colors, sizes_enabled, colors_enabled, category, stock, createdAt, updatedAt) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)',
       [
         id,
         product.name,
         product.description,
         product.price,
-        product.image,
-        JSON.stringify(product.images),
+        product.primaryImagePath,
         JSON.stringify(product.sizes),
         JSON.stringify(product.colors),
         sizesEnabled,
@@ -69,15 +68,17 @@ export class ProductRepository implements IProductRepository {
     }
 
     const setClause = fields.map((field, index) => {
-      const dbField = field === 'sizesEnabled' ? 'sizes_enabled' : 
-                      field === 'colorsEnabled' ? 'colors_enabled' : field;
+      const dbField = field === 'sizesEnabled' ? 'sizes_enabled' :
+        field === 'colorsEnabled' ? 'colors_enabled' :
+          field === 'primaryImagePath' ? 'primary_image_path' :
+            field === 'primaryImageId' ? 'primary_image_id' : field;
       return `${dbField} = $${index + 1}`;
     }).join(', ');
-    
+
     const values = [
       ...fields.map(field => {
         const val = product[field as keyof UpdateProductRequest];
-        if (['images', 'sizes', 'colors'].includes(field) && Array.isArray(val)) {
+        if (['sizes', 'colors'].includes(field) && Array.isArray(val)) {
           return JSON.stringify(val);
         }
         return val;
@@ -231,8 +232,8 @@ export class ProductRepository implements IProductRepository {
       name: row.name,
       description: row.description,
       price: Number(row.price),
-      image: row.image,
-      images: Array.isArray(row.images) ? row.images : JSON.parse(row.images || '[]'),
+      primaryImagePath: row.primary_image_path ?? row.image,
+      primaryImageId: row.primary_image_id,
       sizes: Array.isArray(row.sizes) ? row.sizes : JSON.parse(row.sizes || '[]'),
       colors: Array.isArray(row.colors) ? row.colors : JSON.parse(row.colors || '[]'),
       sizesEnabled: row.sizes_enabled ?? row.sizesenabled ?? true,  // Backward compatibility

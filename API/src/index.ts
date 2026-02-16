@@ -90,7 +90,10 @@ function buildServer(): FastifyInstance {
   app.register(helmet, {
     crossOriginResourcePolicy: { policy: "cross-origin" }
   });
-  app.register(cors, { origin: true });
+  app.register(cors, { 
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  });
   app.register(rateLimit, { max: 200, timeWindow: '1 minute' });
   app.register(multipart, {
     limits: {
@@ -131,8 +134,8 @@ function buildServer(): FastifyInstance {
   // Routes
   app.register(async (api) => {
     api.register(async (products) => {
-      registerProductRoutes(products, productService);
-      registerProductImageRoutes(products, productImageService);
+      registerProductRoutes(products, productService, imageStorageService);
+      registerProductImageRoutes(products, productImageService, imageStorageService);
     }, { prefix: '/products' });
     api.register(async (cart) => registerCartRoutes(cart, cartService), { prefix: '/cart' });
     api.register(async (auth) => registerAuthRoutes(auth, authController), { prefix: '/' }); // /api/auth/login

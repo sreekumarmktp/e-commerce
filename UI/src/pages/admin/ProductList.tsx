@@ -52,7 +52,7 @@ const AdminProductList: React.FC = () => {
                         {products.map((product) => (
                             <TableRow key={product.id}>
                                 <TableCell>
-                                    <img src={getImageUrl(product.image)} alt={product.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />
+                                    <img src={getImageUrl(product.image || '')} alt={product.name} style={{ width: 50, height: 50, objectFit: 'cover' }} />
                                 </TableCell>
                                 <TableCell>{product.name}</TableCell>
                                 <TableCell>₹{product.price.toFixed(2)}</TableCell>

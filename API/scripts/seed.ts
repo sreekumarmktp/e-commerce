@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 import path from 'path';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import { ImageStorageServiceFactory } from '../src/infrastructure/services/ImageStorageServiceFactory';
+
+const imageStorageService = ImageStorageServiceFactory.createImageStorageService();
 
 // Load env vars
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -209,32 +213,69 @@ async function seed() {
 
         // Seed products
         for (const product of sampleProducts) {
-            await pool.query(`
-        INSERT INTO products (id, name, description, price, image, images, sizes, colors, category, stock, createdAt, updatedAt)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-        ON CONFLICT (id) DO UPDATE SET
-          name = EXCLUDED.name,
-          description = EXCLUDED.description,
-          price = EXCLUDED.price,
-          image = EXCLUDED.image,
-          images = EXCLUDED.images,
-          sizes = EXCLUDED.sizes,
-          colors = EXCLUDED.colors,
-          category = EXCLUDED.category,
-          stock = EXCLUDED.stock,
-          updatedAt = NOW()
-      `, [
-                product.id,
-                product.name,
-                product.description,
-                product.price,
-                product.image,
-                JSON.stringify(product.images),
-                JSON.stringify(product.sizes),
-                JSON.stringify(product.colors),
-                product.category,
-                product.stock
-            ]);
+            let primaryImagePath = product.image;
+
+            // First, insert the product
+            try {
+                await pool.query(`
+                    INSERT INTO products (id, name, description, price, primary_image_path, sizes, colors, category, stock, createdat, updatedat)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                    ON CONFLICT (id) DO UPDATE SET
+                      name = EXCLUDED.name,
+                      description = EXCLUDED.description,
+                      price = EXCLUDED.price,
+                      primary_image_path = EXCLUDED.primary_image_path,
+                      sizes = EXCLUDED.sizes,
+                      colors = EXCLUDED.colors,
+                      category = EXCLUDED.category,
+                      stock = EXCLUDED.stock,
+                      updatedat = NOW()
+                `, [
+                    product.id,
+                    product.name,
+                    product.description,
+                    product.price,
+                    primaryImagePath,
+                    JSON.stringify(product.sizes),
+                    JSON.stringify(product.colors),
+                    product.category,
+                    product.stock
+                ]);
+            } catch (err: any) {
+                console.error(`Error seeding product ${product.name}:`);
+                console.error('Message:', err.message);
+                console.error('Detail:', err.detail);
+                console.error('Hint:', err.hint);
+                console.error('Code:', err.code);
+                throw err;
+            }
+
+            // Then, ingest and insert the product image
+            try {
+                console.log(`Ingesting image for product: ${product.name}`);
+                const response = await axios.get(product.image, { responseType: 'arraybuffer' });
+                const buffer = Buffer.from(response.data, 'binary');
+
+                // Ingest via storage service
+                primaryImagePath = await imageStorageService.uploadImage(buffer, 'primary.jpg', product.id);
+
+                // Create record in product_images
+                const imageId = uuidv4();
+                await pool.query(`
+                    INSERT INTO product_images (id, product_id, image_path, display_order, is_primary, file_size, mime_type, width, height, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                    ON CONFLICT (id) DO NOTHING
+                `, [imageId, product.id, primaryImagePath, 0, true, buffer.length, 'image/jpeg', 800, 1200]);
+
+                // Update product with the actual image path and primary_image_id
+                await pool.query(`
+                    UPDATE products 
+                    SET primary_image_path = $1, primary_image_id = $2, updatedat = NOW()
+                    WHERE id = $3
+                `, [primaryImagePath, imageId, product.id]);
+            } catch (e) {
+                console.warn(`Failed to ingest image for ${product.name}: ${(e as any).message}`);
+            }
         }
         console.log('Sample products seeded.');
 

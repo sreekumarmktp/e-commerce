@@ -22,14 +22,13 @@ export class ProductImageRepository implements IProductImageRepository {
     await dbRun(
       this.db,
       `INSERT INTO product_images 
-        (id, product_id, image_path, image_url, display_order, is_primary, 
+        (id, product_id, image_path, display_order, is_primary, 
          file_size, mime_type, width, height, created_at, updated_at) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         id,
         productId,
         imageData.imagePath,
-        imageData.imageUrl,
         imageData.displayOrder,
         isPrimary,
         imageData.fileSize,
@@ -45,7 +44,6 @@ export class ProductImageRepository implements IProductImageRepository {
       id,
       productId,
       imagePath: imageData.imagePath,
-      imageUrl: imageData.imageUrl,
       displayOrder: imageData.displayOrder,
       isPrimary,
       fileSize: imageData.fileSize,
@@ -136,7 +134,6 @@ export class ProductImageRepository implements IProductImageRepository {
       id: row.id,
       productId: row.product_id,
       imagePath: row.image_path,
-      imageUrl: row.image_url,
       displayOrder: row.display_order,
       isPrimary: row.is_primary,
       fileSize: row.file_size,

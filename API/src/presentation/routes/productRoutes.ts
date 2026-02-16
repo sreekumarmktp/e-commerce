@@ -11,8 +11,14 @@ import {
   updateProductBodySchema
 } from '../schemas/productSchemas';
 
-export function registerProductRoutes(app: FastifyInstance, productService: IProductService): void {
-  const productController = new ProductController(productService);
+import { IImageStorageService } from '../../domain/services/IImageStorageService';
+
+export function registerProductRoutes(
+  app: FastifyInstance,
+  productService: IProductService,
+  imageStorageService: IImageStorageService
+): void {
+  const productController = new ProductController(productService, imageStorageService);
 
   // GET /api/products - Get all products
   app.get(

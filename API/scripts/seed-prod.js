@@ -210,27 +210,53 @@ async function seed() {
 
         // Seed products
         for (const product of sampleProducts) {
+            let primaryImagePath = product.image;
+            try {
+                console.log(`Ingesting image for product: ${product.name}`);
+                const axios = require('axios');
+                const response = await axios.get(product.image, { responseType: 'arraybuffer' });
+                const buffer = Buffer.from(response.data, 'binary');
+
+                // In production, we'd use S3ImageStorageService
+                // But since this is a standalone script, we'll simulate the key generation
+                // and assume images are uploaded or should be referenced by key.
+                const ext = product.image.split('.').pop().split('?')[0] || 'jpg';
+                const storedFilename = `${uuidv4()}.${ext}`;
+                primaryImagePath = `${product.id}/${storedFilename}`;
+
+                console.log(`[ProdSeed] Simulating S3 upload: products/${primaryImagePath}`);
+                // TODO: Actual S3 upload if needed:
+                // await s3.putObject({ Bucket: bucket, Key: primaryImagePath, Body: buffer }).promise();
+
+                // Create record in product_images
+                await pool.query(`
+                    INSERT INTO product_images (id, product_id, image_path, display_order, is_primary, file_size, mime_type, width, height, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                    ON CONFLICT (id) DO NOTHING
+                `, [uuidv4(), product.id, primaryImagePath, 0, true, buffer.length, 'image/jpeg', 800, 1200]);
+            } catch (e) {
+                console.warn(`Failed to ingest image for ${product.name}: ${e.message}`);
+            }
+
             await pool.query(`
-        INSERT INTO products (id, name, description, price, image, images, sizes, colors, category, stock, createdAt, updatedAt)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
-        ON CONFLICT (id) DO UPDATE SET
-          name = EXCLUDED.name,
-          description = EXCLUDED.description,
-          price = EXCLUDED.price,
-          image = EXCLUDED.image,
-          images = EXCLUDED.images,
-          sizes = EXCLUDED.sizes,
-          colors = EXCLUDED.colors,
-          category = EXCLUDED.category,
-          stock = EXCLUDED.stock,
-          updatedAt = NOW()
-      `, [
+                INSERT INTO products (id, name, description, price, primary_image_path, sizes, colors, category, stock, createdAt, updatedAt)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                ON CONFLICT (id) DO UPDATE SET
+                  name = EXCLUDED.name,
+                  description = EXCLUDED.description,
+                  price = EXCLUDED.price,
+                  primary_image_path = EXCLUDED.primary_image_path,
+                  sizes = EXCLUDED.sizes,
+                  colors = EXCLUDED.colors,
+                  category = EXCLUDED.category,
+                  stock = EXCLUDED.stock,
+                  updatedAt = NOW()
+            `, [
                 product.id,
                 product.name,
                 product.description,
                 product.price,
-                product.image,
-                JSON.stringify(product.images),
+                primaryImagePath,
                 JSON.stringify(product.sizes),
                 JSON.stringify(product.colors),
                 product.category,

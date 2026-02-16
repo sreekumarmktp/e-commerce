@@ -51,7 +51,7 @@ const ProductDetail: React.FC = () => {
 
   useEffect(() => {
     if (selectedProduct) {
-      setMainImage(getImageUrl(selectedProduct.image));
+      setMainImage(getImageUrl(selectedProduct.image || ''));
       if (selectedProduct.sizes && selectedProduct.sizes.length > 0) {
         setSelectedSize(selectedProduct.sizes[0]);
       }
@@ -91,9 +91,9 @@ const ProductDetail: React.FC = () => {
   };
 
   // Determine if selectors should be shown based on enabled flags and available values
-  const showSizeSelector = selectedProduct ? 
+  const showSizeSelector = selectedProduct ?
     selectedProduct.sizesEnabled && selectedProduct.sizes.length > 0 : false;
-  const showColorSelector = selectedProduct ? 
+  const showColorSelector = selectedProduct ?
     selectedProduct.colorsEnabled && selectedProduct.colors.length > 0 : false;
 
   if (loading) {
@@ -169,75 +169,75 @@ const ProductDetail: React.FC = () => {
             >
               {productImages.length > 0
                 ? productImages.map((img, index) => (
-                    <Box
-                      key={img.id}
-                      onClick={() => setMainImage(img.imageUrl)}
-                      sx={{
-                        width: { xs: '70px', sm: '100%' },
-                        aspectRatio: '1/1',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        border: '2px solid',
-                        borderColor: (mainImage === img.imageUrl || (!mainImage && index === 0)) ? 'primary.main' : 'transparent',
-                        opacity: (mainImage === img.imageUrl || (!mainImage && index === 0)) ? 1 : 0.6,
-                        transition: 'all 0.2s ease',
-                        '&:hover': { opacity: 1 },
-                        position: 'relative',
-                      }}
-                    >
-                      <img
-                        src={img.imageUrl}
-                        alt={`Thumbnail ${index}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                      {img.isPrimary && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            bottom: 4,
-                            right: 4,
-                            backgroundColor: 'primary.main',
-                            color: 'white',
-                            borderRadius: '50%',
-                            width: 20,
-                            height: 20,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.75rem',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          ★
-                        </Box>
-                      )}
-                    </Box>
-                  ))
-                : [getImageUrl(selectedProduct.image), ...(selectedProduct.images || []).map(img => getImageUrl(img))].filter((img, idx, self) => self.indexOf(img) === idx).map((img, index) => (
-                    <Box
-                      key={index}
-                      onClick={() => setMainImage(img)}
-                      sx={{
-                        width: { xs: '70px', sm: '100%' },
-                        aspectRatio: '1/1',
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        border: '2px solid',
-                        borderColor: (mainImage === img || (!mainImage && index === 0)) ? 'primary.main' : 'transparent',
-                        opacity: (mainImage === img || (!mainImage && index === 0)) ? 1 : 0.6,
-                        transition: 'all 0.2s ease',
-                        '&:hover': { opacity: 1 }
-                      }}
-                    >
-                      <img
-                        src={img}
-                        alt={`Thumbnail ${index}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </Box>
-                  ))}
+                  <Box
+                    key={img.id}
+                    onClick={() => setMainImage(img.imageUrl)}
+                    sx={{
+                      width: { xs: '70px', sm: '100%' },
+                      aspectRatio: '1/1',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      border: '2px solid',
+                      borderColor: (mainImage === img.imageUrl || (!mainImage && index === 0)) ? 'primary.main' : 'transparent',
+                      opacity: (mainImage === img.imageUrl || (!mainImage && index === 0)) ? 1 : 0.6,
+                      transition: 'all 0.2s ease',
+                      '&:hover': { opacity: 1 },
+                      position: 'relative',
+                    }}
+                  >
+                    <img
+                      src={img.imageUrl}
+                      alt={`Thumbnail ${index}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {img.isPrimary && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          bottom: 4,
+                          right: 4,
+                          backgroundColor: 'primary.main',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: 20,
+                          height: 20,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        ★
+                      </Box>
+                    )}
+                  </Box>
+                ))
+                : [getImageUrl(selectedProduct.image || ''), ...(selectedProduct.images || []).map(img => getImageUrl(img))].filter((img, idx, self) => img !== '' && self.indexOf(img) === idx).map((img, index) => (
+                  <Box
+                    key={index}
+                    onClick={() => setMainImage(img)}
+                    sx={{
+                      width: { xs: '70px', sm: '100%' },
+                      aspectRatio: '1/1',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      border: '2px solid',
+                      borderColor: (mainImage === img || (!mainImage && index === 0)) ? 'primary.main' : 'transparent',
+                      opacity: (mainImage === img || (!mainImage && index === 0)) ? 1 : 0.6,
+                      transition: 'all 0.2s ease',
+                      '&:hover': { opacity: 1 }
+                    }}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${index}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </Box>
+                ))}
             </Box>
           </Box>
         </Grid>

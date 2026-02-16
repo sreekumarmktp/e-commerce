@@ -3,8 +3,8 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  image: string;
-  images: string[];
+  primaryImagePath: string;
+  primaryImageId?: string;
   sizes: string[];
   colors: string[];
   sizesEnabled: boolean;
@@ -19,8 +19,7 @@ export interface CreateProductRequest {
   name: string;
   description: string;
   price: number;
-  image: string;
-  images: string[];
+  primaryImagePath: string;
   sizes: string[];
   colors: string[];
   sizesEnabled?: boolean;
@@ -33,8 +32,8 @@ export interface UpdateProductRequest {
   name?: string;
   description?: string;
   price?: number;
-  image?: string;
-  images?: string[];
+  primaryImagePath?: string;
+  primaryImageId?: string;
   sizes?: string[];
   colors?: string[];
   sizesEnabled?: boolean;

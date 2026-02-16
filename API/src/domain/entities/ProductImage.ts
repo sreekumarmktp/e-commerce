@@ -2,7 +2,6 @@ export interface ProductImage {
   id: string;
   productId: string;
   imagePath: string;
-  imageUrl: string;
   displayOrder: number;
   isPrimary: boolean;
   fileSize: number;
@@ -15,7 +14,6 @@ export interface ProductImage {
 
 export interface ProductImageData {
   imagePath: string;
-  imageUrl: string;
   displayOrder: number;
   isPrimary?: boolean;
   fileSize: number;

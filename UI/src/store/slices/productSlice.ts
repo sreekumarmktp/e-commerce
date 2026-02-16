@@ -7,8 +7,10 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  image: string;
-  images: string[];
+  image?: string; // Keep for convenience as full URL
+  images?: string[];
+  primaryImagePath?: string;
+  primaryImageId?: string;
   sizes: string[];
   colors: string[];
   sizesEnabled: boolean;

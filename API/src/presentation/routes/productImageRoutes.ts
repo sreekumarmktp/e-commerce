@@ -19,11 +19,14 @@ import {
  * - PATCH /api/products/:productId/images/:imageId/primary - Set primary
  * - DELETE /api/products/:productId/images/:imageId - Delete image
  */
+import { IImageStorageService } from '../../domain/services/IImageStorageService';
+
 export function registerProductImageRoutes(
   app: FastifyInstance,
-  productImageService: IProductImageService
+  productImageService: IProductImageService,
+  imageStorageService: IImageStorageService
 ): void {
-  const controller = new ProductImageController(productImageService);
+  const controller = new ProductImageController(productImageService, imageStorageService);
 
   /**
    * POST /api/products/:productId/images
