@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const dotenv = require('dotenv');
 const path = require('path');
 const bcrypt = require('bcrypt');
@@ -19,6 +20,14 @@ const pool = new Pool({
     connectionString: databaseUrl,
     ssl: isAws ? { rejectUnauthorized: false } : false
 });
+
+// S3 Configuration
+const s3Client = process.env.AWS_S3_BUCKET ? new S3Client({
+    region: process.env.AWS_REGION || 'ap-south-2'
+}) : null;
+
+const bucketName = process.env.AWS_S3_BUCKET;
+const cloudFrontUrl = process.env.CLOUDFRONT_URL;
 
 const sampleProducts = [
     {
@@ -210,34 +219,7 @@ async function seed() {
 
         // Seed products
         for (const product of sampleProducts) {
-            let primaryImagePath = product.image;
-            try {
-                console.log(`Ingesting image for product: ${product.name}`);
-                const axios = require('axios');
-                const response = await axios.get(product.image, { responseType: 'arraybuffer' });
-                const buffer = Buffer.from(response.data, 'binary');
-
-                // In production, we'd use S3ImageStorageService
-                // But since this is a standalone script, we'll simulate the key generation
-                // and assume images are uploaded or should be referenced by key.
-                const ext = product.image.split('.').pop().split('?')[0] || 'jpg';
-                const storedFilename = `${uuidv4()}.${ext}`;
-                primaryImagePath = `${product.id}/${storedFilename}`;
-
-                console.log(`[ProdSeed] Simulating S3 upload: products/${primaryImagePath}`);
-                // TODO: Actual S3 upload if needed:
-                // await s3.putObject({ Bucket: bucket, Key: primaryImagePath, Body: buffer }).promise();
-
-                // Create record in product_images
-                await pool.query(`
-                    INSERT INTO product_images (id, product_id, image_path, display_order, is_primary, file_size, mime_type, width, height, created_at, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-                    ON CONFLICT (id) DO NOTHING
-                `, [uuidv4(), product.id, primaryImagePath, 0, true, buffer.length, 'image/jpeg', 800, 1200]);
-            } catch (e) {
-                console.warn(`Failed to ingest image for ${product.name}: ${e.message}`);
-            }
-
+            // First, insert the product record with original Unsplash URL as fallback
             await pool.query(`
                 INSERT INTO products (id, name, description, price, primary_image_path, sizes, colors, category, stock, createdAt, updatedAt)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
@@ -245,7 +227,6 @@ async function seed() {
                   name = EXCLUDED.name,
                   description = EXCLUDED.description,
                   price = EXCLUDED.price,
-                  primary_image_path = EXCLUDED.primary_image_path,
                   sizes = EXCLUDED.sizes,
                   colors = EXCLUDED.colors,
                   category = EXCLUDED.category,
@@ -256,12 +237,62 @@ async function seed() {
                 product.name,
                 product.description,
                 product.price,
-                primaryImagePath,
+                product.image, // Use original URL temporarily
                 JSON.stringify(product.sizes),
                 JSON.stringify(product.colors),
                 product.category,
                 product.stock
             ]);
+
+            // Now handle the image ingestion
+            let primaryImagePath = product.image;
+            try {
+                console.log(`Ingesting image for product: ${product.name}`);
+                const axios = require('axios');
+                const response = await axios.get(product.image, { responseType: 'arraybuffer' });
+                const buffer = Buffer.from(response.data, 'binary');
+
+                // Generate S3 key
+                const imageId = uuidv4();
+                const storedFilename = `${imageId}.jpg`; // Unsplash images are JPG
+                const s3Key = `${product.id}/${storedFilename}`;
+
+                if (s3Client && bucketName) {
+                    // Upload to S3
+                    console.log(`[ProdSeed] Uploading to S3: s3://${bucketName}/${s3Key}`);
+                    const command = new PutObjectCommand({
+                        Bucket: bucketName,
+                        Key: s3Key,
+                        Body: buffer,
+                        ContentType: 'image/jpeg',
+                        CacheControl: 'max-age=31536000'
+                    });
+                    await s3Client.send(command);
+                    primaryImagePath = s3Key;
+                    console.log(`[ProdSeed] Successfully uploaded to S3`);
+                } else {
+                    console.log(`[ProdSeed] S3 not configured, using original URL`);
+                    primaryImagePath = product.image;
+                }
+
+                // Create record in product_images
+                await pool.query(`
+                    INSERT INTO product_images (id, product_id, image_path, display_order, is_primary, file_size, mime_type, width, height, created_at, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+                    ON CONFLICT (id) DO NOTHING
+                `, [uuidv4(), product.id, primaryImagePath, 0, true, buffer.length, 'image/jpeg', 800, 1200]);
+
+                // Update product with the proper image path
+                await pool.query(`
+                    UPDATE products 
+                    SET primary_image_path = $1, updatedAt = NOW()
+                    WHERE id = $2
+                `, [primaryImagePath, product.id]);
+
+            } catch (e) {
+                console.warn(`Failed to ingest image for ${product.name}: ${e.message}`);
+                console.warn(`Stack: ${e.stack}`);
+            }
         }
         console.log('Sample products seeded.');
 

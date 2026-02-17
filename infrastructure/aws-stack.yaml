@@ -117,6 +117,15 @@ Resources:
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: PORT
           Value: '8080'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: AWS_S3_BUCKET
+          Value: !Ref ProductImagesBucket
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: AWS_REGION
+          Value: !Ref AWS::Region
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: NODE_ENV
+          Value: 'production'
         - Namespace: aws:elasticbeanstalk:environment
           OptionName: EnvironmentType
           Value: SingleInstance # Free Tier - No Load Balancer, No Elastic IP
@@ -145,6 +154,20 @@ Resources:
         - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
         - arn:aws:iam::aws:policy/AWSElasticBeanstalkMulticontainerDocker
         - arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier
+      Policies:
+        - PolicyName: S3ProductImagesAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${ProductImagesBucket}'
+                  - !Sub 'arn:aws:s3:::${ProductImagesBucket}/*'
 
   EBInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -294,6 +317,27 @@ Resources:
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
 
+  # --- Product Images Bucket (S3) ---
+  ProductImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-product-images-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - '*'
+            AllowedMethods:
+              - GET
+              - HEAD
+            AllowedHeaders:
+              - '*'
+            MaxAge: 3600
+
   # --- Custom Resource to Empty S3 Bucket on Deletion ---
   EmptyS3BucketResource:
     Type: AWS::CloudFormation::CustomResource
@@ -315,6 +359,19 @@ Resources:
             Action: s3:GetObject
             Resource: !Sub 'arn:aws:s3:::${FrontendBucket}/*'
 
+  ProductImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProductImagesBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${ProductImagesBucket}/*'
+
 Outputs:
   APIEndpoint:
     Description: URL of the API (Elastic Beanstalk Domain)
@@ -327,6 +384,9 @@ Outputs:
   FrontendBucketName:
     Description: Name of the S3 Bucket for Frontend
     Value: !Ref FrontendBucket
+  ProductImagesBucketName:
+    Description: Name of the S3 Bucket for Product Images
+    Value: !Ref ProductImagesBucket
   UIEndpoint:
     Description: URL of the Frontend website
     Value: !GetAtt FrontendBucket.WebsiteURL
