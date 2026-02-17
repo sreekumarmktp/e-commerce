@@ -280,17 +280,9 @@ Resources:
                   logger.error(f'Error: {str(e)}', exc_info=True)
                   send_response(event, context, 'FAILED', reason=str(e))
 
-  # --- Custom Resource to Empty S3 Bucket on Deletion ---
-  EmptyS3BucketResource:
-    Type: AWS::CloudFormation::CustomResource
-    Properties:
-      ServiceToken: !GetAtt EmptyS3BucketFunction.Arn
-      BucketName: !Ref FrontendBucket
-
   # --- Frontend (S3) ---
   FrontendBucket:
     Type: AWS::S3::Bucket
-    DependsOn: EmptyS3BucketResource
     Properties:
       BucketName: !Sub '${EnvironmentName}-ui-${AWS::AccountId}' # Unique bucket name
       WebsiteConfiguration:
@@ -301,6 +293,14 @@ Resources:
         BlockPublicPolicy: false
         IgnorePublicAcls: false
         RestrictPublicBuckets: false
+
+  # --- Custom Resource to Empty S3 Bucket on Deletion ---
+  EmptyS3BucketResource:
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn: FrontendBucket
+    Properties:
+      ServiceToken: !GetAtt EmptyS3BucketFunction.Arn
+      BucketName: !Ref FrontendBucket
 
   FrontendBucketPolicy:
     Type: AWS::S3::BucketPolicy
