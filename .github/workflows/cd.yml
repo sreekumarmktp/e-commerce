@@ -81,6 +81,10 @@ jobs:
         zip -r deploy.zip dist migrations scripts package.json package-lock.json
       working-directory: ./API
 
+    - name: Generate Version Label
+      id: version
+      run: echo "label=v-$(date +%s)-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
+
     - name: Deploy to Elastic Beanstalk
       uses: einaregilsson/beanstalk-deploy@v22
       with:
@@ -88,7 +92,7 @@ jobs:
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: ${{ env.ENVIRONMENT_NAME }}-api
         environment_name: ${{ env.ENVIRONMENT_NAME }}-env
-        version_label: ${{ github.sha }}-${{ github.run_id }}
+        version_label: ${{ steps.version.outputs.label }}
         region: ${{ env.AWS_REGION }}
         deployment_package: API/deploy.zip
 
