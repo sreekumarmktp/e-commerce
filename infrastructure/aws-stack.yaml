@@ -113,13 +113,13 @@ Resources:
           Value: !Sub 'postgres://${DBUser}:${DBPassword}@${DBInstance.Endpoint.Address}:5432/${DBName}'
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: API_BASE_URL
-          Value: !Sub 'http://${EnvironmentName}-${AWS::AccountId}.${AWS::Region}.elasticbeanstalk.com'
+          Value: !GetAtt EBEnvironment.EndpointURL
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: PORT
           Value: '8080'
         - Namespace: aws:elasticbeanstalk:environment
           OptionName: EnvironmentType
-          Value: SingleInstance # Free Tier
+          Value: SingleInstance # Free Tier - No Load Balancer, No Elastic IP
         - Namespace: aws:ec2:vpc
           OptionName: VPCId
           Value: !Ref VpcId
@@ -127,8 +127,8 @@ Resources:
           OptionName: Subnets
           Value: !Join [",", !Ref Subnets]
         - Namespace: aws:ec2:vpc
-          OptionName: ELBSubnets
-          Value: !Join [",", !Ref Subnets]
+          OptionName: AssociatePublicIpAddress
+          Value: 'true'
 
   # --- IAM Roles for EB ---
   EBInstanceRole:
@@ -317,8 +317,13 @@ Resources:
 
 Outputs:
   APIEndpoint:
-    Description: URL of the API
-    Value: !Sub 'http://${EnvironmentName}-${AWS::AccountId}.${AWS::Region}.elasticbeanstalk.com'
+    Description: URL of the API (Elastic Beanstalk Domain)
+    Value: !GetAtt EBEnvironment.EndpointURL
+    Export:
+      Name: !Sub '${AWS::StackName}-APIEndpoint'
+  EBEnvironmentURL:
+    Description: Elastic Beanstalk Environment CNAME
+    Value: !Sub '${EnvironmentName}-${AWS::AccountId}.${AWS::Region}.elasticbeanstalk.com'
   FrontendBucketName:
     Description: Name of the S3 Bucket for Frontend
     Value: !Ref FrontendBucket
