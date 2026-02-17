@@ -113,7 +113,7 @@ Resources:
           Value: !Sub 'postgres://${DBUser}:${DBPassword}@${DBInstance.Endpoint.Address}:5432/${DBName}'
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: API_BASE_URL
-          Value: !GetAtt EBEnvironment.EndpointURL
+          Value: !Sub 'http://${EnvironmentName}-${AWS::AccountId}.${AWS::Region}.elasticbeanstalk.com'
         - Namespace: aws:elasticbeanstalk:application:environment
           OptionName: PORT
           Value: '8080'
