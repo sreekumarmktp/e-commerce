@@ -17,6 +17,9 @@ describe('ProductImageService', () => {
   let mockProductRepository: jest.Mocked<IProductRepository>;
 
   beforeEach(() => {
+    // Reset all mocks
+    jest.clearAllMocks();
+    
     mockValidator = {
       validateFormat: jest.fn(),
       validateSize: jest.fn(),
@@ -59,7 +62,6 @@ describe('ProductImageService', () => {
         id: `img-${i}`,
         productId: 'product-1',
         imagePath: `path-${i}`,
-        imageUrl: `url-${i}`,
         displayOrder: i,
         isPrimary: i === 0,
         fileSize: 1000,
@@ -89,7 +91,6 @@ describe('ProductImageService', () => {
         id: 'db-image-1',
         productId: 'product-1',
         imagePath: 'image-id-1',
-        imageUrl: '/uploads/image-id-1',
         isPrimary: true,
         displayOrder: 0,
         fileSize: 1000,
@@ -104,6 +105,7 @@ describe('ProductImageService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([createdImage]);
 
+      mockValidator.validateAll.mockReset();
       mockValidator.validateAll.mockResolvedValue({
         valid: true,
         errors: [],
@@ -130,8 +132,8 @@ describe('ProductImageService', () => {
       // Verifying other calls
       expect(mockRepository.createImage).toHaveBeenCalled();
       expect(mockProductRepository.update).toHaveBeenCalledWith('product-1', {
-        image: '/uploads/image-id-1',
-        images: ['/uploads/image-id-1']
+        primaryImagePath: 'image-id-1',
+        primaryImageId: 'db-image-1'
       });
     });
 
@@ -139,9 +141,10 @@ describe('ProductImageService', () => {
       mockRepository.getProductImages
         .mockResolvedValueOnce([]) // Initial check
         .mockResolvedValueOnce([
-          { id: 'db-image-1', productId: 'product-1', isPrimary: true, imageUrl: '/uploads/image-id-1' }
+          { id: 'db-image-1', productId: 'product-1', isPrimary: true, imagePath: '/uploads/image-id-1' }
         ] as any); // Sync check
 
+      mockValidator.validateAll.mockReset();
       mockValidator.validateAll.mockResolvedValue({
         valid: true,
         errors: [],
@@ -152,7 +155,7 @@ describe('ProductImageService', () => {
       mockRepository.createImage.mockResolvedValue({
         id: 'db-image-1',
         productId: 'product-1',
-        imageUrl: '/uploads/image-id-1',
+        imagePath: '/uploads/image-id-1',
         isPrimary: true,
         displayOrder: 0
       } as any);
@@ -172,6 +175,9 @@ describe('ProductImageService', () => {
 
     it('should throw error if validation fails', async () => {
       mockRepository.getProductImages.mockResolvedValue([]);
+      
+      // Reset and set up the validation mock for this specific test
+      mockValidator.validateAll.mockReset();
       mockValidator.validateAll.mockResolvedValue({
         valid: false,
         errors: ['Invalid image format'],
@@ -194,7 +200,6 @@ describe('ProductImageService', () => {
         id: 'existing-1',
         productId: 'product-1',
         imagePath: 'path-1',
-        imageUrl: 'url-1',
         displayOrder: 0,
         isPrimary: true,
         fileSize: 1000,
@@ -207,8 +212,9 @@ describe('ProductImageService', () => {
 
       mockRepository.getProductImages
         .mockResolvedValueOnce([existingImage]) // Initial check
-        .mockResolvedValueOnce([existingImage, { id: 'db-image-2', imageUrl: '/uploads/image-id-2' }, { id: 'db-image-3', imageUrl: '/uploads/image-id-3' }] as any); // Sync check
+        .mockResolvedValueOnce([existingImage, { id: 'db-image-2', imagePath: '/uploads/image-id-2' }, { id: 'db-image-3', imagePath: '/uploads/image-id-3' }] as any); // Sync check
 
+      mockValidator.validateAll.mockReset();
       mockValidator.validateAll.mockResolvedValue({
         valid: true,
         errors: [],
@@ -226,7 +232,6 @@ describe('ProductImageService', () => {
           id: 'db-image-2',
           productId: 'product-1',
           imagePath: 'image-id-2',
-          imageUrl: '/uploads/image-id-2',
           displayOrder: 1,
           isPrimary: false,
           fileSize: 50000,
@@ -240,7 +245,6 @@ describe('ProductImageService', () => {
           id: 'db-image-3',
           productId: 'product-1',
           imagePath: 'image-id-3',
-          imageUrl: '/uploads/image-id-3',
           displayOrder: 2,
           isPrimary: false,
           fileSize: 50000,
@@ -290,7 +294,6 @@ describe('ProductImageService', () => {
           id: 'img-1',
           productId: 'product-1',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 1000,
@@ -315,7 +318,6 @@ describe('ProductImageService', () => {
           id: 'img-1',
           productId: 'product-1',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 1000,
@@ -329,7 +331,6 @@ describe('ProductImageService', () => {
           id: 'img-2',
           productId: 'product-1',
           imagePath: 'path-2',
-          imageUrl: 'url-2',
           displayOrder: 1,
           isPrimary: false,
           fileSize: 1000,
@@ -346,12 +347,12 @@ describe('ProductImageService', () => {
       // Configure getProductImages for BOTH the validation call and the sync call
       mockRepository.getProductImages
         .mockResolvedValueOnce([
-          { id: 'img-1', productId: 'product-1', displayOrder: 0, imageUrl: 'url-1' },
-          { id: 'img-2', productId: 'product-1', displayOrder: 1, imageUrl: 'url-2' }
+          { id: 'img-1', productId: 'product-1', displayOrder: 0, imagePath: 'url-1' },
+          { id: 'img-2', productId: 'product-1', displayOrder: 1, imagePath: 'url-2' }
         ] as any)
         .mockResolvedValueOnce([
-          { id: 'img-2', productId: 'product-1', displayOrder: 0, imageUrl: 'url-2' },
-          { id: 'img-1', productId: 'product-1', displayOrder: 1, imageUrl: 'url-1' }
+          { id: 'img-2', productId: 'product-1', displayOrder: 0, imagePath: 'url-2' },
+          { id: 'img-1', productId: 'product-1', displayOrder: 1, imagePath: 'url-1' }
         ] as any);
 
       await service.reorderImages('product-1', [
@@ -381,7 +382,6 @@ describe('ProductImageService', () => {
         id: 'img-1',
         productId: 'product-2',
         imagePath: 'path-1',
-        imageUrl: 'url-1',
         displayOrder: 0,
         isPrimary: false,
         fileSize: 1000,
@@ -402,7 +402,6 @@ describe('ProductImageService', () => {
         id: 'img-1',
         productId: 'product-1',
         imagePath: 'path-1',
-        imageUrl: 'url-1',
         displayOrder: 0,
         isPrimary: false,
         fileSize: 1000,
@@ -418,9 +417,9 @@ describe('ProductImageService', () => {
         {
           id: 'img-1',
           productId: 'product-1',
-          imageUrl: 'url-1',
           isPrimary: true,
-          displayOrder: 0
+          displayOrder: 0,
+          imagePath: 'path-1'
         }
       ] as any);
 
@@ -428,8 +427,8 @@ describe('ProductImageService', () => {
 
       expect(mockRepository.setPrimaryImage).toHaveBeenCalledWith('product-1', 'img-1');
       expect(mockProductRepository.update).toHaveBeenCalledWith('product-1', {
-        image: 'url-1',
-        images: ['url-1']
+        primaryImagePath: 'path-1',
+        primaryImageId: 'img-1'
       });
     });
   });
@@ -446,7 +445,6 @@ describe('ProductImageService', () => {
         id: 'img-1',
         productId: 'product-1',
         imagePath: 'path-1',
-        imageUrl: 'url-1',
         displayOrder: 0,
         isPrimary: true,
         fileSize: 1000,
@@ -462,7 +460,6 @@ describe('ProductImageService', () => {
           id: 'img-1',
           productId: 'product-1',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 1000,
@@ -482,7 +479,6 @@ describe('ProductImageService', () => {
         id: 'img-1',
         productId: 'product-1',
         imagePath: 'path-1',
-        imageUrl: 'url-1',
         displayOrder: 0,
         isPrimary: false,
         fileSize: 1000,
@@ -498,7 +494,6 @@ describe('ProductImageService', () => {
           id: 'img-1',
           productId: 'product-1',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: false,
           fileSize: 1000,
@@ -512,7 +507,6 @@ describe('ProductImageService', () => {
           id: 'img-2',
           productId: 'product-1',
           imagePath: 'path-2',
-          imageUrl: 'url-2',
           displayOrder: 1,
           isPrimary: true,
           fileSize: 1000,
@@ -530,7 +524,7 @@ describe('ProductImageService', () => {
           { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: true }
         ] as any) // For validation check
         .mockResolvedValueOnce([
-          { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: true, imageUrl: 'url-2' }
+          { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: true, imagePath: 'url-2' }
         ] as any); // For sync
 
       mockStorageService.deleteImage.mockResolvedValue(undefined);
@@ -548,7 +542,6 @@ describe('ProductImageService', () => {
         id: 'img-1',
         productId: 'product-1',
         imagePath: 'path-1',
-        imageUrl: 'url-1',
         displayOrder: 0,
         isPrimary: true,
         fileSize: 1000,
@@ -568,7 +561,7 @@ describe('ProductImageService', () => {
           { id: 'img-2', productId: 'product-1', displayOrder: 1, isPrimary: false }
         ] as any) // For primary reassignment check
         .mockResolvedValueOnce([
-          { id: 'img-2', productId: 'product-1', displayOrder: 0, isPrimary: true, imageUrl: 'url-2' }
+          { id: 'img-2', productId: 'product-1', displayOrder: 0, isPrimary: true, imagePath: 'url-2' }
         ] as any); // For sync
 
       mockStorageService.deleteImage.mockResolvedValue(undefined);
@@ -589,7 +582,6 @@ describe('ProductImageService', () => {
           id: 'img-1',
           productId: 'product-1',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 1000,

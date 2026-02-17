@@ -1,5 +1,6 @@
 import { ProductImageController } from '../../../presentation/controllers/ProductImageController';
 import { IProductImageService } from '../../../domain/services/IProductImageService';
+import { IImageStorageService } from '../../../domain/services/IImageStorageService';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { ValidationError } from '../../../domain/errors/ValidationError';
 import { NotFoundError } from '../../../domain/errors/NotFoundError';
@@ -9,6 +10,7 @@ import { Readable } from 'stream';
 describe('ProductImageController', () => {
   let controller: ProductImageController;
   let mockService: jest.Mocked<IProductImageService>;
+  let mockImageStorageService: jest.Mocked<IImageStorageService>;
   let mockReply: jest.Mocked<FastifyReply>;
 
   beforeEach(() => {
@@ -25,7 +27,13 @@ describe('ProductImageController', () => {
       send: jest.fn().mockReturnThis(),
     } as any;
 
-    controller = new ProductImageController(mockService);
+    mockImageStorageService = {
+      uploadImage: jest.fn(),
+      deleteImage: jest.fn(),
+      getImageUrl: jest.fn().mockReturnValue('http://localhost:3001/uploads/test.jpg')
+    } as any;
+
+    controller = new ProductImageController(mockService, mockImageStorageService);
   });
 
   describe('uploadImages', () => {
@@ -35,7 +43,6 @@ describe('ProductImageController', () => {
           id: '550e8400-e29b-41d4-a716-446655440001',
           productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 50000,
@@ -70,7 +77,10 @@ describe('ProductImageController', () => {
       expect(mockReply.code).toHaveBeenCalledWith(201);
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
-        data: mockImages,
+        data: mockImages.map(img => ({
+          ...img,
+          imageUrl: 'http://localhost:3001/uploads/test.jpg'
+        })),
         message: '1 image(s) uploaded successfully',
       });
     });
@@ -134,7 +144,6 @@ describe('ProductImageController', () => {
           id: img1Id,
           productId: productId,
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 1,
           isPrimary: false,
           fileSize: 50000,
@@ -148,7 +157,6 @@ describe('ProductImageController', () => {
           id: img2Id,
           productId: productId,
           imagePath: 'path-2',
-          imageUrl: 'url-2',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 50000,
@@ -177,7 +185,10 @@ describe('ProductImageController', () => {
 
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
-        data: mockImages,
+        data: mockImages.map(img => ({
+          ...img,
+          imageUrl: 'http://localhost:3001/uploads/test.jpg'
+        })),
         message: 'Images reordered successfully',
       });
     });
@@ -213,7 +224,6 @@ describe('ProductImageController', () => {
           id: '550e8400-e29b-41d4-a716-446655440001',
           productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 50000,
@@ -236,7 +246,10 @@ describe('ProductImageController', () => {
 
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
-        data: mockImages,
+        data: mockImages.map(img => ({
+          ...img,
+          imageUrl: 'http://localhost:3001/uploads/test.jpg'
+        })),
         message: 'Primary image set successfully',
       });
     });
@@ -267,7 +280,6 @@ describe('ProductImageController', () => {
           id: '550e8400-e29b-41d4-a716-446655440002',
           productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-2',
-          imageUrl: 'url-2',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 50000,
@@ -290,7 +302,10 @@ describe('ProductImageController', () => {
 
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
-        data: mockImages,
+        data: mockImages.map(img => ({
+          ...img,
+          imageUrl: 'http://localhost:3001/uploads/test.jpg'
+        })),
         message: 'Image deleted successfully',
       });
     });
@@ -321,7 +336,6 @@ describe('ProductImageController', () => {
           id: '550e8400-e29b-41d4-a716-446655440001',
           productId: '550e8400-e29b-41d4-a716-446655440000',
           imagePath: 'path-1',
-          imageUrl: 'url-1',
           displayOrder: 0,
           isPrimary: true,
           fileSize: 50000,
@@ -343,7 +357,10 @@ describe('ProductImageController', () => {
 
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
-        data: mockImages,
+        data: mockImages.map(img => ({
+          ...img,
+          imageUrl: 'http://localhost:3001/uploads/test.jpg'
+        })),
         message: 'Product images retrieved successfully',
       });
     });

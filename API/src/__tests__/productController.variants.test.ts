@@ -1,5 +1,6 @@
 import { ProductController } from '../presentation/controllers/ProductController';
 import { IProductService } from '../domain/services/IProductService';
+import { IImageStorageService } from '../domain/services/IImageStorageService';
 import { Product } from '../domain/entities/Product';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { ZodError } from 'zod';
@@ -12,6 +13,7 @@ import { ZodError } from 'zod';
 
 describe('ProductController - Variant Management API Endpoints', () => {
   let mockService: IProductService;
+  let mockImageStorageService: IImageStorageService;
   let controller: ProductController;
   let mockRequest: Partial<FastifyRequest>;
   let mockReply: Partial<FastifyReply>;
@@ -21,8 +23,7 @@ describe('ProductController - Variant Management API Endpoints', () => {
     name: 'Test Product',
     description: 'Test Description',
     price: 99.99,
-    image: 'test.jpg',
-    images: ['test.jpg'],
+    primaryImagePath: 'test.jpg',
     sizes: ['S', 'M', 'L'],
     colors: ['Red', 'Blue'],
     sizesEnabled: true,
@@ -51,7 +52,14 @@ describe('ProductController - Variant Management API Endpoints', () => {
       validateColorValue: jest.fn()
     };
 
-    controller = new ProductController(mockService);
+    // Mock image storage service
+    mockImageStorageService = {
+      uploadImage: jest.fn(),
+      deleteImage: jest.fn(),
+      getImageUrl: jest.fn().mockReturnValue('http://localhost:3001/uploads/test.jpg')
+    };
+
+    controller = new ProductController(mockService, mockImageStorageService);
 
     // Mock reply object
     mockReply = {

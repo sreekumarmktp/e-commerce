@@ -34,8 +34,7 @@ describe('ProductImageRepository', () => {
       name: 'Test Product',
       description: 'Test description',
       price: 100,
-      image: 'test.jpg',
-      images: [],
+      primaryImagePath: 'test.jpg',
       sizes: [],
       colors: [],
       category: 'test',
@@ -64,7 +63,6 @@ describe('ProductImageRepository', () => {
     it('should create a new product image with all metadata', async () => {
       const imageData: ProductImageData = {
         imagePath: '/uploads/test-image.jpg',
-        imageUrl: 'http://example.com/test-image.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -78,7 +76,6 @@ describe('ProductImageRepository', () => {
       expect(result.id).toBeDefined();
       expect(result.productId).toBe(testProductId);
       expect(result.imagePath).toBe(imageData.imagePath);
-      expect(result.imageUrl).toBe(imageData.imageUrl);
       expect(result.displayOrder).toBe(0);
       expect(result.isPrimary).toBe(false);
       expect(result.fileSize).toBe(102400);
@@ -92,7 +89,6 @@ describe('ProductImageRepository', () => {
     it('should set isPrimary to true when specified', async () => {
       const imageData: ProductImageData = {
         imagePath: '/uploads/primary-image.jpg',
-        imageUrl: 'http://example.com/primary-image.jpg',
         displayOrder: 0,
         isPrimary: true,
         fileSize: 102400,
@@ -109,7 +105,6 @@ describe('ProductImageRepository', () => {
     it('should persist image to database', async () => {
       const imageData: ProductImageData = {
         imagePath: '/uploads/persist-test.jpg',
-        imageUrl: 'http://example.com/persist-test.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -130,7 +125,6 @@ describe('ProductImageRepository', () => {
     it('should return all images for a product in display order', async () => {
       const image1Data: ProductImageData = {
         imagePath: '/uploads/image1.jpg',
-        imageUrl: 'http://example.com/image1.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -140,7 +134,6 @@ describe('ProductImageRepository', () => {
 
       const image2Data: ProductImageData = {
         imagePath: '/uploads/image2.jpg',
-        imageUrl: 'http://example.com/image2.jpg',
         displayOrder: 1,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -167,7 +160,6 @@ describe('ProductImageRepository', () => {
     it('should return images sorted by display order', async () => {
       const imageData3: ProductImageData = {
         imagePath: '/uploads/image3.jpg',
-        imageUrl: 'http://example.com/image3.jpg',
         displayOrder: 2,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -177,7 +169,6 @@ describe('ProductImageRepository', () => {
 
       const imageData1: ProductImageData = {
         imagePath: '/uploads/image1.jpg',
-        imageUrl: 'http://example.com/image1.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -187,7 +178,6 @@ describe('ProductImageRepository', () => {
 
       const imageData2: ProductImageData = {
         imagePath: '/uploads/image2.jpg',
-        imageUrl: 'http://example.com/image2.jpg',
         displayOrder: 1,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -213,7 +203,6 @@ describe('ProductImageRepository', () => {
     it('should return image by ID', async () => {
       const imageData: ProductImageData = {
         imagePath: '/uploads/get-by-id.jpg',
-        imageUrl: 'http://example.com/get-by-id.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -240,7 +229,6 @@ describe('ProductImageRepository', () => {
     it('should update display order for multiple images', async () => {
       const image1Data: ProductImageData = {
         imagePath: '/uploads/order1.jpg',
-        imageUrl: 'http://example.com/order1.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -250,7 +238,6 @@ describe('ProductImageRepository', () => {
 
       const image2Data: ProductImageData = {
         imagePath: '/uploads/order2.jpg',
-        imageUrl: 'http://example.com/order2.jpg',
         displayOrder: 1,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -278,7 +265,6 @@ describe('ProductImageRepository', () => {
     it('should handle reordering with gaps in display order', async () => {
       const imageData1: ProductImageData = {
         imagePath: '/uploads/gap1.jpg',
-        imageUrl: 'http://example.com/gap1.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -288,7 +274,6 @@ describe('ProductImageRepository', () => {
 
       const imageData2: ProductImageData = {
         imagePath: '/uploads/gap2.jpg',
-        imageUrl: 'http://example.com/gap2.jpg',
         displayOrder: 1,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -298,7 +283,6 @@ describe('ProductImageRepository', () => {
 
       const imageData3: ProductImageData = {
         imagePath: '/uploads/gap3.jpg',
-        imageUrl: 'http://example.com/gap3.jpg',
         displayOrder: 2,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -329,7 +313,6 @@ describe('ProductImageRepository', () => {
     it('should set an image as primary', async () => {
       const imageData: ProductImageData = {
         imagePath: '/uploads/primary.jpg',
-        imageUrl: 'http://example.com/primary.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -348,7 +331,6 @@ describe('ProductImageRepository', () => {
     it('should unset previous primary image when setting new one', async () => {
       const imageData1: ProductImageData = {
         imagePath: '/uploads/primary1.jpg',
-        imageUrl: 'http://example.com/primary1.jpg',
         displayOrder: 0,
         isPrimary: true,
         fileSize: 102400,
@@ -359,7 +341,6 @@ describe('ProductImageRepository', () => {
 
       const imageData2: ProductImageData = {
         imagePath: '/uploads/primary2.jpg',
-        imageUrl: 'http://example.com/primary2.jpg',
         displayOrder: 1,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -388,8 +369,7 @@ describe('ProductImageRepository', () => {
         name: 'Other Test Product',
         description: 'Other test description',
         price: 100,
-        image: 'test.jpg',
-        images: [],
+        primaryImagePath: 'test.jpg',
         sizes: [],
         colors: [],
         category: 'test',
@@ -398,7 +378,6 @@ describe('ProductImageRepository', () => {
 
       const imageData1: ProductImageData = {
         imagePath: '/uploads/other1.jpg',
-        imageUrl: 'http://example.com/other1.jpg',
         displayOrder: 0,
         isPrimary: true,
         fileSize: 102400,
@@ -409,7 +388,6 @@ describe('ProductImageRepository', () => {
 
       const imageData2: ProductImageData = {
         imagePath: '/uploads/other2.jpg',
-        imageUrl: 'http://example.com/other2.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -442,7 +420,6 @@ describe('ProductImageRepository', () => {
     it('should delete an image by ID', async () => {
       const imageData: ProductImageData = {
         imagePath: '/uploads/delete.jpg',
-        imageUrl: 'http://example.com/delete.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -461,7 +438,6 @@ describe('ProductImageRepository', () => {
     it('should remove image from product images list', async () => {
       const imageData1: ProductImageData = {
         imagePath: '/uploads/delete1.jpg',
-        imageUrl: 'http://example.com/delete1.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -471,7 +447,6 @@ describe('ProductImageRepository', () => {
 
       const imageData2: ProductImageData = {
         imagePath: '/uploads/delete2.jpg',
-        imageUrl: 'http://example.com/delete2.jpg',
         displayOrder: 1,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -496,8 +471,7 @@ describe('ProductImageRepository', () => {
         name: 'Other Delete Test Product',
         description: 'Other delete test description',
         price: 100,
-        image: 'test.jpg',
-        images: [],
+        primaryImagePath: 'test.jpg',
         sizes: [],
         colors: [],
         category: 'test',
@@ -506,7 +480,6 @@ describe('ProductImageRepository', () => {
 
       const imageData1: ProductImageData = {
         imagePath: '/uploads/other-delete1.jpg',
-        imageUrl: 'http://example.com/other-delete1.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -516,7 +489,6 @@ describe('ProductImageRepository', () => {
 
       const imageData2: ProductImageData = {
         imagePath: '/uploads/other-delete2.jpg',
-        imageUrl: 'http://example.com/other-delete2.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -549,7 +521,6 @@ describe('ProductImageRepository', () => {
       // Create multiple images
       const imageData1: ProductImageData = {
         imagePath: '/uploads/lifecycle1.jpg',
-        imageUrl: 'http://example.com/lifecycle1.jpg',
         displayOrder: 0,
         fileSize: 102400,
         mimeType: 'image/jpeg',
@@ -559,7 +530,6 @@ describe('ProductImageRepository', () => {
 
       const imageData2: ProductImageData = {
         imagePath: '/uploads/lifecycle2.jpg',
-        imageUrl: 'http://example.com/lifecycle2.jpg',
         displayOrder: 1,
         fileSize: 102400,
         mimeType: 'image/jpeg',
