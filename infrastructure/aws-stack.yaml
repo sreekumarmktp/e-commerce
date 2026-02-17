@@ -318,7 +318,7 @@ Resources:
 Outputs:
   APIEndpoint:
     Description: URL of the API (Elastic Beanstalk Domain)
-    Value: !GetAtt EBEnvironment.EndpointURL
+    Value: !Sub 'http://${EBEnvironment.EndpointURL}'
     Export:
       Name: !Sub '${AWS::StackName}-APIEndpoint'
   EBEnvironmentURL:
