@@ -239,16 +239,15 @@ const AdminProductForm: React.FC = () => {
         navigate('/admin/products');
     };
 
-    if (loading && isEditMode) return <CircularProgress />;
-
     return (
         <Paper sx={{ p: 4, maxWidth: 600, mx: 'auto' }}>
             <Typography variant="h5" gutterBottom>
                 {isEditMode ? 'Edit Product' : 'Add New Product'}
             </Typography>
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {loading && isEditMode && <CircularProgress />}
 
-            <Box component="form" onSubmit={handleSubmit}>
+            <Box component="form" onSubmit={handleSubmit} role="form">
                 <TextField
                     fullWidth
                     label="Name"

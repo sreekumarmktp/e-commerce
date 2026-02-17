@@ -118,7 +118,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
           component="img"
           height="200"
           image={image.imageUrl}
-          alt={`Product image ${image.displayOrder + 1}`}
+          alt="Product image"
           sx={{
             objectFit: 'cover',
           }}
@@ -126,9 +126,6 @@ const ImageCard: React.FC<ImageCardProps> = ({
 
         {/* Metadata */}
         <Box sx={{ p: 2 }}>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Order: {image.displayOrder + 1}
-          </Typography>
           <Typography variant="caption" display="block" color="text.secondary">
             Size: {sizeInMB} MB
           </Typography>

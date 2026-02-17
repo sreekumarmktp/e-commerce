@@ -5,6 +5,7 @@ import {
   CircularProgress,
   Typography,
   Alert,
+  Snackbar,
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
@@ -38,6 +39,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   const [draggedImage, setDraggedImage] = useState<ProductImage | null>(null);
   const [dragOverImage, setDragOverImage] = useState<ProductImage | null>(null);
   const [localImages, setLocalImages] = useState<ProductImage[]>(images);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Update local images when props change
   React.useEffect(() => {
@@ -80,6 +82,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
       return;
     }
 
+    // Save previous state before optimistic update
+    const previousImages = [...localImages];
+
     // Create new order
     const newImages = [...localImages];
     const [removed] = newImages.splice(draggedIndex, 1);
@@ -111,8 +116,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
       }
     } catch (error) {
       console.error('Failed to reorder images:', error);
-      // Revert to original order on error
-      setLocalImages(images);
+      // Revert to previous order on error
+      setLocalImages(previousImages);
+      setErrorMessage('Failed to reorder images. Please try again.');
     }
   };
 
@@ -211,6 +217,22 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
           </Box>
         ))}
       </Grid>
+
+      {/* Error Notification Snackbar */}
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setErrorMessage(null)}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
